@@ -7,13 +7,9 @@
 #######################
 
 library(tidyverse)
-library(stringr)
-library(tidyr)
-library(purrr)
 library(pbapply)
 library(data.table)
 library(janitor)
-library(ggrepel)
 library(aws.s3)
 library(parallel)
 library(pbmcapply)
