@@ -1,9 +1,17 @@
+#Hidden files
+/Formal care variables/*.*
+/Markdown report/*.*
+/rsconnect/*.*
+/Flourish data/*.*
+/ASC FR/*.*
+
 # History files
 .Rhistory
 .Rapp.history
 
 # Session Data files
-.RData
+*.RData
+*.Rproj
 
 # User-specific files
 .Ruserdata
