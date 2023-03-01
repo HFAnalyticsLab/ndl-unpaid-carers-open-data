@@ -60,4 +60,4 @@ This project is licensed under the MIT License.
 
 ## Acknowledgments
 
-Thank you to Fiona Grimm, my co-author, for her advice and guidance throughout this analysis.
+Thank you to Fiona Grimm ([GitHub](https://github.com/fiona-grimm)), my co-author, for her advice and guidance throughout this analysis.
