@@ -493,15 +493,42 @@ get_pairs_result <- get_pairs_result %>%
   left_join(.,caredfor_vars,by=c("wave_num","hidp","caredfor_pno")) %>%
   select(-"rel_key_bis")
 
+# get_pairs_result %>%
+#   filter(wave_num=="12") %>% 
+#   mutate(missing_rel=is.na(relationshipdv) %>% as.numeric()) %>% 
+#   group_by(pidp,wave_num) %>%
+#   mutate(n_people=n(),
+#          any_missing_rel=max(missing_rel)) %>% 
+#   ungroup() %>% 
+#   filter(any_missing_rel==1) %>%
+#   arrange(desc(wave_num),pidp) %>%
+#   select(wave_num,pidp,hidp,pno,caredfor_pno,relationshipdv,n_people)
+# 
+# pairs_person_level %>%
+#   filter(wave_num=="12"&pidp=="1636671692") %>%
+#   select(wave_num,pidp,caredfor_inhh_unique_rels,caredfor_inhh_first,caredfor_inhh_rel)
+
 #Collapse back to the person/carer level
 #Merge all cared--for variables back into dataset
 
 pairs_person_level <- get_pairs_result %>%
-  mutate(caredfor_sexdvnum=ifelse(caredfor_sexdv=="Female",0,ifelse(caredfor_sexdv=="Male",1,NA))) %>%
-  group_by(pidp,wave_num) %>%
-  summarise(.,caredfor_inhh_first=first(relationshipdv),
+  mutate(relationshipdv_cons=fct_collapse(relationshipdv,
+                                          partner= c("partner/cohabitee","husband/wife","civil partner"),
+                                          child = c("natural son/daughter","foster child","stepson/stepdaughter","son-in-law/daughter-in-law","adopted son/daughter"),
+                                          grandparent = c("grand-parent"),
+                                          parent=c("natural parent","step-parent","parent-in-law","adoptive parent"),
+                                          sibling=c("natural brother/sister","half-brother/sister","foster brother/sister","brother/sister-in-law","step-brother/sister","adopted brother/sister"),
+                                          `other relative`=c("grand-child","aunt/uncle","cousin","other relative","niece/nephew"),
+                                          other=c("other non-relative","lodger/boarder/tenant","landlord/landlady"))) %>% 
+  mutate(caredfor_sexdvnum=ifelse(caredfor_sexdv=="Female",0,ifelse(caredfor_sexdv=="Male",1,NA)),
+         missing_rel=is.na(relationshipdv_cons) %>% as.numeric()) %>%
+  mutate(relationshipdv_cons=as.character(relationshipdv_cons)) %>% 
+  group_by(pidp,wave_num) %>% 
+  summarise(.,
+            any_missing_rel=max(missing_rel),
+            caredfor_inhh_first=first(relationshipdv_cons),
             caredfor_inhh_number=n_distinct(caredfor_pno),
-            caredfor_inhh_unique_rels=n_distinct(relationshipdv),
+            caredfor_inhh_unique_rels=n_distinct(relationshipdv_cons),
             cared_for_inhh_parent=max(parent,na.rm=TRUE),
             cared_for_inhh_partner=max(partner,na.rm=TRUE),
             cared_for_inhh_child=max(child,na.rm=TRUE),
@@ -516,7 +543,8 @@ pairs_person_level <- get_pairs_result %>%
                                   caredfor_inhh_sexes==1&caredfor_inhh_sexmax==0 ~ "female",
                                   TRUE ~ "NA"),
          caredfor_inhh_rel=ifelse(caredfor_inhh_unique_rels==1,caredfor_inhh_first,"multiple care relationships")) %>%
-  select(-c("caredfor_inhh_sexes","caredfor_inhh_sexmax"))
+  mutate(caredfor_inhh_rel=ifelse(any_missing_rel==1,NA,caredfor_inhh_rel)) %>% 
+  select(-c("caredfor_inhh_sexes","caredfor_inhh_sexmax","any_missing_rel"))
 
 usoc_long <- usoc_long %>%
   mutate(.,pidp=as.character(pidp),
@@ -527,6 +555,14 @@ usoc_long <- usoc_long %>%
 
 #Consolidating relationship variable (cared-for), for both inside and outside of household caring
 
+list_of_rels <- usoc_long %>%
+  mutate(care_rel_anywhere_raw=paste(caredfor_inhh_rel,rel_exhh,sep=" // ")) %>%
+  mutate(care_rel_anywhere_raw=str_replace_all(care_rel_anywhere_raw," // NA","")) %>%
+  mutate(care_rel_anywhere_raw=str_replace_all(care_rel_anywhere_raw,"NA //","")) %>%
+  mutate(care_rel_anywhere_raw=trimws(care_rel_anywhere_raw,"both")) %>%
+  pull(care_rel_anywhere_raw) %>%
+  unique(.) %>% as.data.frame()
+
 usoc_long <- usoc_long %>%
   mutate(has_ex_hh_rel=ifelse(!is.na(rel_exhh)&rel_exhh!="NA",1,0),
          has_in_hh_rel=ifelse(!is.na(caredfor_inhh_rel)&caredfor_inhh_rel!="NA",1,0)) %>%
@@ -535,174 +571,83 @@ usoc_long <- usoc_long %>%
   mutate(care_rel_anywhere_raw=str_replace_all(care_rel_anywhere_raw,"NA //","")) %>%
   mutate(care_rel_anywhere_raw=trimws(care_rel_anywhere_raw,"both")) %>% 
   mutate(care_rel_anywhere=fct_collapse(care_rel_anywhere_raw,
-                                    child = 
-                                      c( "natural son/daughter"                                              ,
-                                         "foster child"                                                      ,
-                                         "stepson/stepdaughter"                                              ,
-                                         "son-in-law/daughter-in-law"                                        ,
-                                         "adopted son/daughter"                                              ),
-                                    grandparent=c( "Grandparent"                                                       ,
-                                                   "grand-parent"                                                      ,
-                                                   "grand-parent // Grandparent"                                       ),
-                                    `multiple care relationships`=c( "multiple care relationships"                                       ,
-                                                                     "natural brother/sister // Grandparent"                             ,
-                                                                     "natural brother/sister // Other relative"                          ,
-                                                                     "Multiple care relationships"                                       ,
-                                                                     "natural son/daughter // Parent/parent-in-law"                      ,
-                                                                     "husband/wife // Multiple care relationships"                       ,
-                                                                     "natural parent // Friend or neighbour"                             ,
-                                                                     "natural parent // Multiple care relationships"                     ,
-                                                                     "husband/wife // Other relative"                                    ,
-                                                                     "husband/wife // Parent/parent-in-law"                              ,
-                                                                     "natural parent // Grandparent"                                     ,
-                                                                     "natural son/daughter // Friend or neighbour"                       ,
-                                                                     "natural son/daughter // Multiple care relationships"               ,
-                                                                     "natural son/daughter // Other relative"                            ,
-                                                                     "natural son/daughter // Grandparent"                               ,
-                                                                     "natural son/daughter // Aunt/uncle"                                ,
-                                                                     "multiple care relationships // Other relative"                     ,
-                                                                     "husband/wife // Other"                                             ,
-                                                                     "husband/wife // Aunt/uncle"                                        ,
-                                                                     "husband/wife // Friend or neighbour"                               ,
-                                                                     "other non-relative // Multiple care relationships"                 ,
-                                                                     "multiple care relationships // Multiple care relationships"        ,
-                                                                     "grand-child // Parent/parent-in-law"                               ,
-                                                                     "partner/cohabitee // Parent/parent-in-law"                         ,
-                                                                     "natural parent // Aunt/uncle"                                      ,
-                                                                     "natural son/daughter // Other"                                     ,
-                                                                     "partner/cohabitee // Friend or neighbour"                          ,
-                                                                     "civil partner // Friend or neighbour"                              ,
-                                                                     "natural brother/sister // Friend or neighbour"                     ,
-                                                                     "partner/cohabitee // Multiple care relationships"                  ,
-                                                                     "other relative // Parent/parent-in-law"                            ,
-                                                                     "parent-in-law // Friend or neighbour"                              ,
-                                                                     "parent-in-law // Multiple care relationships"                      ,
-                                                                     "natural parent // Other relative"                                  ,
-                                                                     "other non-relative // Friend or neighbour"                         ,
-                                                                     "natural brother/sister // Parent/parent-in-law"                    ,
-                                                                     "natural son/daughter // Client(s) of voluntary organisation"       ,
-                                                                     "partner/cohabitee // Other relative"                               ,
-                                                                     "grand-parent // Multiple care relationships"                       ,
-                                                                     "niece/nephew // Parent/parent-in-law"                              ,
-                                                                     "partner/cohabitee // Grandparent"                                  ,
-                                                                     "partner/cohabitee // Other"                                        ,
-                                                                     "multiple care relationships // Other"                              ,
-                                                                     "multiple care relationships // Parent/parent-in-law"               ,
-                                                                     "half-brother/sister // Multiple care relationships"                ,
-                                                                     "civil partner // Other"                                            ,
-                                                                     "other non-relative // Parent/parent-in-law"                        ,
-                                                                     "stepson/stepdaughter // Friend or neighbour"                       ,
-                                                                     "multiple care relationships // Grandparent"                        ,
-                                                                     "natural brother/sister // Multiple care relationships"             ,
-                                                                     "partner/cohabitee // Client(s) of voluntary organisation"          ,
-                                                                     "multiple care relationships // Client(s) of voluntary organisation",
-                                                                     "multiple care relationships // Friend or neighbour"                ,
-                                                                     "natural parent // Other"                                           ,
-                                                                     "son-in-law/daughter-in-law // Parent/parent-in-law"                ,
-                                                                     "husband/wife // Grandparent"                                       ,
-                                                                     "stepson/stepdaughter // Multiple care relationships"               ,
-                                                                     "grand-parent // Parent/parent-in-law"                              ,
-                                                                     "multiple care relationships // Aunt/uncle"                         ,
-                                                                     "adoptive parent // Friend or neighbour"                            ,
-                                                                     "lodger/boarder/tenant // Friend or neighbour"                      ,
-                                                                     "lodger/boarder/tenant // Other"                                    ,
-                                                                     "lodger/boarder/tenant // Multiple care relationships"              ,
-                                                                     "husband/wife // Client(s) of voluntary organisation"               ,
-                                                                     "foster child // Other relative"                                    ,
-                                                                     "other relative // Aunt/uncle"                                      ,
-                                                                     "other relative // Multiple care relationships"                     ,
-                                                                     "adopted son/daughter // Multiple care relationships"               ,
-                                                                     "adopted son/daughter // Parent/parent-in-law"                      ,
-                                                                     "grand-child // Multiple care relationships"                        ,
-                                                                     "natural parent // Client(s) of voluntary organisation"             ,
-                                                                     "stepson/stepdaughter // Other"                                     ,
-                                                                     "civil partner // Other relative"                                   ,
-                                                                     "other non-relative // Grandparent"                                 ,
-                                                                     "adopted son/daughter // Other"                                     ,
-                                                                     "foster child // Parent/parent-in-law"                              ,
-                                                                     "grand-parent // Aunt/uncle"                                        ,
-                                                                     "aunt/uncle // Grandparent"                                         ,
-                                                                     "grand-parent // Other relative"                                    ,
-                                                                     "grand-parent // Friend or neighbour"                               ,
-                                                                     "grand-child // Other"                                              ,
-                                                                     "stepson/stepdaughter // Parent/parent-in-law"                      ,
-                                                                     "other non-relative // Client(s) of voluntary organisation"         ,
-                                                                     "other relative // Friend or neighbour"                             ,
-                                                                     "grand-child // Grandparent"                                        ,
-                                                                     "niece/nephew // Other relative"                                    ,
-                                                                     "adoptive parent // Multiple care relationships"                    ,
-                                                                     "brother/sister-in-law // Parent/parent-in-law"                     ,
-                                                                     "half-brother/sister // Grandparent"                                ,
-                                                                     "grand-parent // Other"                                             ,
-                                                                     "stepson/stepdaughter // Grandparent"                               ,
-                                                                     "landlord/landlady // Parent/parent-in-law"                         ,
-                                                                     "natural brother/sister // Aunt/uncle"                              ,
-                                                                     "parent-in-law // Other relative"                                   ,
-                                                                     "stepson/stepdaughter // Other relative"                            ,
-                                                                     "brother/sister-in-law // Friend or neighbour"                      ,
-                                                                     "brother/sister-in-law // Multiple care relationships"              ,
-                                                                     "lodger/boarder/tenant // Parent/parent-in-law"                     ,
-                                                                     "niece/nephew // Multiple care relationships"                       ,
-                                                                     "adopted son/daughter // Friend or neighbour"                       ,
-                                                                     "grand-child // Friend or neighbour"                                ,
-                                                                     "aunt/uncle // Friend or neighbour"                                 ,
-                                                                     "civil partner // Parent/parent-in-law"                             ,
-                                                                     "brother/sister-in-law // Aunt/uncle"                               ,
-                                                                     "grand-child // Aunt/uncle"                                         ,
-                                                                     "aunt/uncle // Aunt/uncle"                                          ,
-                                                                     "aunt/uncle // Other relative"                                      ,
-                                                                     "step-parent // Multiple care relationships"                        ,
-                                                                     "step-brother/sister // Aunt/uncle"                                 ,
-                                                                     "parent-in-law // Other"                                            ,
-                                                                     "natural brother/sister // Other"                                   ,
-                                                                     "cousin // Parent/parent-in-law"                                    ,
-                                                                     "lodger/boarder/tenant // Other relative"                           ,
-                                                                     "natural brother/sister // Client(s) of voluntary organisation"     ,
-                                                                     "brother/sister-in-law // Other relative"                           ,
-                                                                     "parent-in-law // Aunt/uncle"                                       ,
-                                                                     "foster child // Friend or neighbour"                               ,
-                                                                     "cousin // Multiple care relationships"                             ,
-                                                                     "cousin // Aunt/uncle",
-                                                                     "grand-child // Other relative"                                     ,
-                                                                     "aunt/uncle // Parent/parent-in-law",
-                                                                     "foster child // Multiple care relationships",
-                                                                     "foster child // Other"),
-                                    other=c( "Other relative"                                                    ,
-                                             "grand-child"                                                       ,
-                                             "other non-relative"                                                ,
-                                             "Friend or neighbour"                                               ,
-                                             "Client(s) of voluntary organisation"                               ,
-                                             "Other"                                                             ,
-                                             "Aunt/uncle"                                                        ,
-                                             "cousin"                                                            ,
-                                             "other relative"                                                    ,
-                                             "other non-relative // Other relative"                              ,
-                                             "other non-relative // Other"                                       ,
-                                             "niece/nephew"                                                      ,
-                                             "lodger/boarder/tenant"                                             ,
-                                             "landlord/landlady"                                                 ,
-                                             "aunt/uncle"                                                        ,
-                                             "other relative // Other relative"                                  ,
-                                             "cousin // Other relative"                                          ,
-                                             "other relative // Other"                                           ),
-                                    parent=c( "Parent/parent-in-law"                                              ,
-                                              "natural parent"                                                    ,
-                                              "natural parent // Parent/parent-in-law"                            ,
-                                              "step-parent"                                                       ,
-                                              "parent-in-law // Parent/parent-in-law"                             ,
-                                              "parent-in-law"                                                     ,
-                                              "adoptive parent"                                                   ,
-                                              "adoptive parent // Parent/parent-in-law"                           ,
-                                              "step-parent // Parent/parent-in-law"                               ),
-                                   partner=c( "partner/cohabitee"                                                 ,
-                                              "husband/wife"                                                      ,
-                                              "civil partner"                                                     ),
-                                   sibling=c( "natural brother/sister"                                            ,
-                                              "half-brother/sister"                                               ,
-                                              "foster brother/sister"                                             ,
-                                              "brother/sister-in-law"                                             ,
-                                              "step-brother/sister"                                               ,
-                                              "adopted brother/sister"                                            ))) %>%
+                                    parent=c('Parent/parent-in-law',
+                                             'parent',
+                                             'parent // Parent/parent-in-law'),
+                                    child = c('child'),
+                                    grandparent=c('Grandparent',
+                                                  'grandparent',
+                                                  'grandparent // Grandparent'),
+                                    `multiple care relationships`=c('multiple care relationships',
+                                                                    'sibling // Grandparent',
+                                                                    'sibling // Other relative',
+                                                                    'Multiple care relationships',
+                                                                    'child // Parent/parent-in-law',
+                                                                    'partner // Multiple care relationships',
+                                                                    'parent // Friend or neighbour',
+                                                                    'parent // Multiple care relationships',
+                                                                    'partner // Other relative',
+                                                                    'partner // Parent/parent-in-law',
+                                                                    'parent // Grandparent',
+                                                                    'child // Friend or neighbour',
+                                                                    'child // Multiple care relationships',
+                                                                    'child // Other relative',
+                                                                    'child // Grandparent',
+                                                                    'child // Aunt/uncle',
+                                                                    'multiple care relationships // Other relative',
+                                                                    'partner // Other',
+                                                                    'partner // Aunt/uncle',
+                                                                    'partner // Friend or neighbour',
+                                                                    'multiple care relationships // Parent/parent-in-law',
+                                                                    'other // Multiple care relationships',
+                                                                    'multiple care relationships // Multiple care relationships',
+                                                                    'other relative // Parent/parent-in-law',
+                                                                    'parent // Aunt/uncle',
+                                                                    'child // Other',
+                                                                    'sibling // Other',
+                                                                    'sibling // Friend or neighbour',
+                                                                    'parent // Other relative',
+                                                                    'other // Friend or neighbour',
+                                                                    'sibling // Parent/parent-in-law',
+                                                                    'child // Client(s) of voluntary organisation',
+                                                                    'grandparent // Multiple care relationships',
+                                                                    'partner // Grandparent',
+                                                                    'multiple care relationships // Other',
+                                                                    'sibling // Multiple care relationships',
+                                                                    'other // Parent/parent-in-law',
+                                                                    'multiple care relationships // Grandparent',
+                                                                    'partner // Client(s) of voluntary organisation',
+                                                                    'sibling // Client(s) of voluntary organisation',
+                                                                    'multiple care relationships // Friend or neighbour',
+                                                                    'parent // Other',
+                                                                    'grandparent // Parent/parent-in-law',
+                                                                    'multiple care relationships // Aunt/uncle',
+                                                                    'other relative // Aunt/uncle',
+                                                                    'other relative // Multiple care relationships',
+                                                                    'multiple care relationships // Client(s) of voluntary organisation',
+                                                                    'parent // Client(s) of voluntary organisation',
+                                                                    'other // Grandparent',
+                                                                    'grandparent // Aunt/uncle',
+                                                                    'other relative // Grandparent',
+                                                                    'grandparent // Other relative',
+                                                                    'grandparent // Friend or neighbour',
+                                                                    'other // Client(s) of voluntary organisation',
+                                                                    'other relative // Friend or neighbour',
+                                                                    'grandparent // Other',
+                                                                    'sibling // Aunt/uncle'),
+                                    other=c('Other relative',
+                                            'other relative',
+                                            'other',
+                                            'Friend or neighbour',
+                                            'Client(s) of voluntary organisation',
+                                            'Other',
+                                            'Aunt/uncle',
+                                            'other // Other relative',
+                                            'other // Other',
+                                            'other relative // Other relative',
+                                            'other relative // Other'),
+                                   partner=c('partner'),
+                                   sibling=c('sibling'))) %>%
   mutate(exhh_care_parent=as.numeric(exhh_care_parent),
          cared_for_inhh_parent=as.numeric(cared_for_inhh_parent)) %>% 
   mutate(cares_parent_anywhere=case_when(is_carer_inhh=="Yes"&is_carer_exhh=="Yes"&(cared_for_inhh_parent==1|exhh_care_parent==1) ~ "1",
@@ -712,7 +657,6 @@ usoc_long <- usoc_long %>%
                                          is_carer_inhh=="No"&is_carer_exhh=="Yes"&(exhh_care_parent==1) ~ "1",
                                          is_carer_inhh=="No"&is_carer_exhh=="Yes"&(exhh_care_parent==0) ~ "0",
                                          TRUE ~ "NA"))
-
 #Relationship groups
 
 usoc_long <- usoc_long %>%
@@ -744,7 +688,7 @@ usoc_long <- usoc_long %>%
                                    is_carer_exhh=="Yes"&(is_carer_inhh!="Yes"|is.na(is_carer_inhh)) ~ "Only outside household"))
 
 #New hours of caring variable
-usoc_long_carers <- usoc_long_carers %>%
+usoc_long <- usoc_long %>%
   mutate(hours_cared_small=case_when(hours_cared %in% c("0 - 4 hours per week","5 - 9 hours per week") ~ "0-10 hours per week",
                                      hours_cared %in% c("10 - 19 hours per week") ~ "10-20 hours per week",
                                      hours_cared %in% c("20 - 34 hours per week","35 - 49 hours per week") ~ "20-50 hours per week",

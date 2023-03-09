@@ -17,9 +17,9 @@ library(srvyr)
 library(plotly)
 library(writexl)
 
-##########################
-###### Read in data ######
-##########################
+###################
+###### Setup ######
+###################
 
 #Clean up the global environment
 rm(list = ls())
@@ -147,6 +147,8 @@ ts_plot <- ts %>%
 
 ts_plot
 
+write_xlsx(ts, paste0(R_workbench,"/usoc-carers-ndl/Flourish data/","usoc_prevalence_timeline.xlsx"))
+
 ####### Location of caring
 
 usoc_design_6to12 %>%
@@ -157,107 +159,125 @@ usoc_design_6to12 %>%
 
 ######## Sex of carers
 
-sex_carers_data <- usoc_design_6to12 %>%
-  subset(wave_num=="12") %>%
-  as_survey(.) %>%
-  group_by(is_carer_anywhere,sexdv) %>% 
-  summarize(n = survey_total()) %>%
-  ungroup() %>%
-  mutate(is_carer_anywhere=ifelse(is.na(is_carer_anywhere),"Unknown",is_carer_anywhere)) %>%
-  filter(sexdv!=""&is_carer_anywhere!="Unknown") %>%
-  group_by(is_carer_anywhere) %>%
-  mutate(sex_total=sum(n)) %>%
-  ungroup() %>%
-  mutate(.,pct_sex=n/sex_total*100)
-
-sex_carers_chart <- sex_carers_data %>%
-  ggplot(., aes(fill=sexdv, y=pct_sex/100, x=is_carer_anywhere)) +
-  geom_bar(position="stack", stat="identity",col="black",lwd=0.3) +
-  ggtitle("Sex of carers") +
-  labs(fill = "Sex") +
-  scale_y_continuous(labels = scales::percent, name="Percent") +
-  xlab("Is carer") +
-  theme_bw() +
-  scale_fill_brewer(palette="Set1") +
-  mytheme
-
-sex_carers_chart
+# sex_carers_data <- usoc_design_6to12 %>%
+#   subset(wave_num=="12") %>%
+#   as_survey(.) %>%
+#   group_by(is_carer_anywhere,sexdv) %>% 
+#   summarize(n = survey_total()) %>%
+#   ungroup() %>%
+#   mutate(is_carer_anywhere=ifelse(is.na(is_carer_anywhere),"Unknown",is_carer_anywhere)) %>%
+#   filter(sexdv!=""&is_carer_anywhere!="Unknown") %>%
+#   group_by(is_carer_anywhere) %>%
+#   mutate(sex_total=sum(n)) %>%
+#   ungroup() %>%
+#   mutate(.,pct_sex=n/sex_total*100)
+# 
+# sex_carers_chart <- sex_carers_data %>%
+#   ggplot(., aes(fill=sexdv, y=pct_sex/100, x=is_carer_anywhere)) +
+#   geom_bar(position="stack", stat="identity",col="black",lwd=0.3) +
+#   ggtitle("Sex of carers") +
+#   labs(fill = "Sex") +
+#   scale_y_continuous(labels = scales::percent, name="Percent") +
+#   xlab("Is carer") +
+#   theme_bw() +
+#   scale_fill_brewer(palette="Set1") +
+#   mytheme
+# 
+# sex_carers_chart
 
 ######## Age of carers
 
-age_carers_table <- usoc_design_6to12 %>%
-  subset(wave_num=="12"&!is.na(is_carer_anywhere)&!is.na(agecatlong)) %>%
-  as_survey(.) %>%
-  group_by(is_carer_anywhere,agecatlong) %>% 
-  summarize(n = survey_total()) %>%
-  ungroup() %>%
-  group_by(is_carer_anywhere) %>%
-  mutate(n_age=sum(n,na.rm=TRUE)) %>% 
-  ungroup() %>%
-  mutate(pct=n/n_age*100)
+#Median age by relationship
 
-age_carers_table_census_comparison <- usoc_design_6to12 %>%
-  subset(wave_num=="12"&!is.na(is_carer_anywhere)&!is.na(agecatlong_cens)) %>%
-  as_survey(.) %>%
-  group_by(is_carer_anywhere,agecatlong_cens) %>% 
-  summarize(n = survey_total()) %>%
-  ungroup() %>%
-  group_by(is_carer_anywhere) %>%
-  mutate(n_age=sum(n,na.rm=TRUE)) %>% 
-  ungroup() %>%
-  mutate(pct=n/n_age*100)
+latest_parent_carers <- usoc_design_6to12 %>%
+  subset(wave_num=="12"&cared_for_inhh_child==1)
 
-####### Percentage of carers by hours cared, latest wave (in-home, and all carers)
+latest_parent_carers
+
+svyquantile(~agedv, latest_parent_carers, seq(0,1,by=0.1),ci=FALSE)
+
+# age_carers_table <- usoc_design_6to12 %>%
+#   subset(wave_num=="12"&!is.na(is_carer_anywhere)&!is.na(agecatlong)) %>%
+#   as_survey(.) %>%
+#   group_by(is_carer_anywhere,agecatlong) %>% 
+#   summarize(n = survey_total()) %>%
+#   ungroup() %>%
+#   group_by(is_carer_anywhere) %>%
+#   mutate(n_age=sum(n,na.rm=TRUE)) %>% 
+#   ungroup() %>%
+#   mutate(pct=n/n_age*100)
+# 
+# age_carers_table_census_comparison <- usoc_design_6to12 %>%
+#   subset(wave_num=="12"&!is.na(is_carer_anywhere)&!is.na(agecatlong_cens)) %>%
+#   as_survey(.) %>%
+#   group_by(is_carer_anywhere,agecatlong_cens) %>% 
+#   summarize(n = survey_total()) %>%
+#   ungroup() %>%
+#   group_by(is_carer_anywhere) %>%
+#   mutate(n_age=sum(n,na.rm=TRUE)) %>% 
+#   ungroup() %>%
+#   mutate(pct=n/n_age*100)
+
+####### Hours cared, latest wave (in-home, and all carers)
 
 #Census comparison
-hours_carers_table_census_comparison <- usoc_design_6to12 %>%
-  subset(wave_num=="12"&is_carer_anywhere=="Yes"&!is.na(hours_cared_smaller)&hours_cared_smaller!="NA") %>%
-  as_survey(.) %>%
-  group_by(is_carer_anywhere,hours_cared_smaller) %>% 
-  summarize(n = survey_total()) %>%
-  ungroup() %>%
-  group_by(is_carer_anywhere) %>%
-  mutate(n_hours=sum(n,na.rm=TRUE)) %>% 
-  ungroup() %>%
-  mutate(pct=n/n_hours*100)
+# hours_carers_table_census_comparison <- usoc_design_6to12 %>%
+#   subset(wave_num=="12"&is_carer_anywhere=="Yes"&!is.na(hours_cared_smaller)&hours_cared_smaller!="NA") %>%
+#   as_survey(.) %>%
+#   group_by(is_carer_anywhere,hours_cared_smaller) %>% 
+#   summarize(n = survey_total()) %>%
+#   ungroup() %>%
+#   group_by(is_carer_anywhere) %>%
+#   mutate(n_hours=sum(n,na.rm=TRUE)) %>% 
+#   ungroup() %>%
+#   mutate(pct=n/n_hours*100)
 
 #Overall
-usoc_design_6to12 %>%
-  subset(wave_num=="12"&is_carer_anywhere=="Yes"&hours_cared!="") %>% 
-  tbl_svysummary(include = c(hours_cared),
-                 type=everything()~"categorical") %>% 
-  bold_labels()
+# usoc_design_6to12 %>%
+#   subset(wave_num=="12"&is_carer_anywhere=="Yes"&hours_cared!="") %>% 
+#   tbl_svysummary(include = c(hours_cared),
+#                  type=everything()~"categorical") %>% 
+#   bold_labels()
 
 #By sex
-usoc_design_6to12 %>%
-  subset(wave_num=="12"&is_carer_anywhere=="Yes"&hours_cared!="") %>% 
-  tbl_svysummary(include = c(hours_cared),
-                 type=everything()~"categorical",
-                 by="sexdv",
-                 label=list(hours_cared = "Hours")) %>% 
-  bold_labels()
+# usoc_design_6to12 %>%
+#   subset(wave_num=="12"&is_carer_anywhere=="Yes"&hours_cared!="") %>% 
+#   tbl_svysummary(include = c(hours_cared),
+#                  type=everything()~"categorical",
+#                  by="sexdv",
+#                  label=list(hours_cared = "Hours")) %>% 
+#   bold_labels()
 
 #By caring location
 usoc_design_6to12 %>%
-  subset(wave_num=="12"&is_carer_anywhere=="Yes"&hours_cared!="") %>% 
-  tbl_svysummary(include = c(hours_cared),
+  subset(wave_num=="12"&is_carer_anywhere=="Yes"&hours_cared_even_smaller!="") %>% 
+  tbl_svysummary(include = c(hours_cared_even_smaller),
                  type=everything()~"categorical",
                  by="caring_location",
-                 label=list(hours_cared = "Hours")) %>% 
+                 label=list(hours_cared_even_smaller = "Hours")) %>% 
+  bold_labels()
+
+#By relationship
+usoc_design_6to12 %>%
+  subset(wave_num=="12"&is_carer_anywhere=="Yes"&!is.na(hours_cared)&hours_cared!=""&hours_cared!="Varies 20 hours or more") %>%
+  tbl_svysummary(include = c(hours_cared),
+                 type=everything()~"categorical",
+                 by="cared_for_inhh_child",
+                 label=list(cared_for_inhh_child = "Cares for child")) %>%
   bold_labels()
 
 ####### Relationship to cared-for, latest wave (in-home, and all carers)
 
-usoc_design_6to12 %>%
-  subset(wave_num=="12"&is_carer_anywhere=="Yes") %>% 
-  tbl_svysummary(include = c(care_rel_anywhere),
-                 type=everything()~"categorical",
-                 by="caring_location",
-                 label=list(care_rel_anywhere ~ "Cared-for person is")) %>% 
-  bold_labels()
+# usoc_design_6to12 %>%
+#   subset(wave_num=="12"&is_carer_anywhere=="Yes") %>%
+#   tbl_svysummary(include = c(care_rel_anywhere),
+#                  type=everything()~"categorical",
+#                  by="caring_location",
+#                  label=list(care_rel_anywhere ~ "Cared-for person is")) %>%
+#   bold_labels()
 
 usoc_design_6to12 %>%
-  subset(wave_num=="12"&is_carer_anywhere=="Yes") %>% 
+  subset(wave_num=="12"&is_carer_anywhere=="Yes") %>%
   tbl_svysummary(include = c(cares_parent_anywhere,
                              cared_for_inhh_partner,
                              cared_for_inhh_child),
@@ -266,77 +286,96 @@ usoc_design_6to12 %>%
                  label=list(is_carer_anywhere = "Carer",
                             cares_parent_anywhere = "Cares for parent",
                             cared_for_inhh_partner = "Cares for partner",
-                            cared_for_inhh_child = "Cares for child")) %>% 
+                            cared_for_inhh_child = "Cares for child")) %>%
   bold_labels()
 
 ####### Relationship to cared-for, latest wave, by age
 
+# usoc_design_6to12 %>%
+#   subset(wave_num=="12"&is_carer_anywhere=="Yes") %>% 
+#   tbl_svysummary(include = c(cares_parent_anywhere,
+#                              cared_for_inhh_partner,
+#                              cared_for_inhh_child),
+#                  type=everything()~"categorical",
+#                  by="agecat",
+#                  label=list(is_carer_anywhere = "Carer",
+#                             cares_parent_anywhere = "Cares for parent",
+#                             cared_for_inhh_partner = "Cares for partner",
+#                             cared_for_inhh_child = "Cares for child")) %>% 
+#   bold_labels()
+
+#Carers under 70
 usoc_design_6to12 %>%
-  subset(wave_num=="12"&is_carer_anywhere=="Yes") %>% 
-  tbl_svysummary(include = c(cares_parent_anywhere,
-                             cared_for_inhh_partner,
-                             cared_for_inhh_child),
+  subset(wave_num=="12"&is_carer_anywhere=="Yes"&agedv<=70) %>% 
+  tbl_svysummary(include = c(cares_parent_anywhere),
                  type=everything()~"categorical",
-                 by="agecat",
                  label=list(is_carer_anywhere = "Carer",
-                            cares_parent_anywhere = "Cares for parent",
-                            cared_for_inhh_partner = "Cares for partner",
-                            cared_for_inhh_child = "Cares for child")) %>% 
+                            cares_parent_anywhere = "Cares for parent")) %>% 
+  bold_labels()
+
+#Cares over 70, by location
+usoc_design_6to12 %>%
+  subset(wave_num=="12"&is_carer_anywhere=="Yes"&agedv>70) %>% 
+  tbl_svysummary(include = c(cared_for_inhh_partner),
+                 type=everything()~"categorical",
+                 by="caring_location",
+                 label=list(is_carer_anywhere = "Carer",
+                            cared_for_inhh_partner = "Cares for partner")) %>% 
   bold_labels()
 
 ####### Age of different groups
 
-age_parent <- usoc_design_6to12 %>%
-  subset(wave_num=="12"&is_carer_anywhere=="Yes") %>%
-  as_survey(.) %>%
-  group_by(cares_parent_anywhere,agecat) %>%
-  summarize(n = survey_total()) %>%
-  ungroup() %>%
-  filter(cares_parent_anywhere==1) %>%
-  mutate(total=sum(n)) %>%
-  mutate(pct=n/total*100) %>%
-  mutate(rel="parent") %>%
-  select(rel,agecat,n,total,pct)
-
-age_partner <- usoc_design_6to12 %>%
-  subset(wave_num=="12"&is_carer_anywhere=="Yes") %>%
-  as_survey(.) %>%
-  group_by(cared_for_inhh_partner,agecat) %>%
-  summarize(n = survey_total()) %>%
-  ungroup() %>%
-  filter(cared_for_inhh_partner==1) %>%
-  mutate(total=sum(n)) %>%
-  mutate(pct=n/total*100) %>%
-  mutate(rel="partner") %>%
-  select(rel,agecat,n,total,pct)
-
-age_child <- usoc_design_6to12 %>%
-  subset(wave_num=="12"&is_carer_anywhere=="Yes") %>%
-  as_survey(.) %>%
-  group_by(cared_for_inhh_child,agecat) %>%
-  summarize(n = survey_total()) %>%
-  ungroup() %>%
-  filter(cared_for_inhh_child==1) %>%
-  mutate(total=sum(n)) %>%
-  mutate(pct=n/total*100) %>%
-  mutate(rel="child") %>%
-  select(rel,agecat,n,total,pct)
-
-age_roles <- plyr::rbind.fill(age_parent,age_partner,age_child)
-rm(age_parent,age_partner,age_child)
-
-age_carers_rel_chart <- age_roles %>%
-  ggplot(., aes(fill=agecat, y=pct/100, x=rel)) +
-  geom_bar(position="stack", stat="identity",col="black",lwd=0.3) +
-  ggtitle("Age of carers based on relationship to cared-for \n in 2021/22") +
-  labs(fill = "Age group") +
-  scale_y_continuous(labels = scales::percent, name="Percent") +
-  xlab("Relationship to cared-for (*overlapping, non-exclusive groups)") +
-  theme_bw() +
-  scale_fill_brewer(palette="Greens") +
-  mytheme
-
-age_carers_rel_chart
+# age_parent <- usoc_design_6to12 %>%
+#   subset(wave_num=="12"&is_carer_anywhere=="Yes") %>%
+#   as_survey(.) %>%
+#   group_by(cares_parent_anywhere,agecat) %>%
+#   summarize(n = survey_total()) %>%
+#   ungroup() %>%
+#   filter(cares_parent_anywhere==1) %>%
+#   mutate(total=sum(n)) %>%
+#   mutate(pct=n/total*100) %>%
+#   mutate(rel="parent") %>%
+#   select(rel,agecat,n,total,pct)
+# 
+# age_partner <- usoc_design_6to12 %>%
+#   subset(wave_num=="12"&is_carer_anywhere=="Yes") %>%
+#   as_survey(.) %>%
+#   group_by(cared_for_inhh_partner,agecat) %>%
+#   summarize(n = survey_total()) %>%
+#   ungroup() %>%
+#   filter(cared_for_inhh_partner==1) %>%
+#   mutate(total=sum(n)) %>%
+#   mutate(pct=n/total*100) %>%
+#   mutate(rel="partner") %>%
+#   select(rel,agecat,n,total,pct)
+# 
+# age_child <- usoc_design_6to12 %>%
+#   subset(wave_num=="12"&is_carer_anywhere=="Yes") %>%
+#   as_survey(.) %>%
+#   group_by(cared_for_inhh_child,agecat) %>%
+#   summarize(n = survey_total()) %>%
+#   ungroup() %>%
+#   filter(cared_for_inhh_child==1) %>%
+#   mutate(total=sum(n)) %>%
+#   mutate(pct=n/total*100) %>%
+#   mutate(rel="child") %>%
+#   select(rel,agecat,n,total,pct)
+# 
+# age_roles <- plyr::rbind.fill(age_parent,age_partner,age_child)
+# rm(age_parent,age_partner,age_child)
+# 
+# age_carers_rel_chart <- age_roles %>%
+#   ggplot(., aes(fill=agecat, y=pct/100, x=rel)) +
+#   geom_bar(position="stack", stat="identity",col="black",lwd=0.3) +
+#   ggtitle("Age of carers based on relationship to cared-for \n in 2021/22") +
+#   labs(fill = "Age group") +
+#   scale_y_continuous(labels = scales::percent, name="Percent") +
+#   xlab("Relationship to cared-for (*overlapping, non-exclusive groups)") +
+#   theme_bw() +
+#   scale_fill_brewer(palette="Greens") +
+#   mytheme
+# 
+# age_carers_rel_chart
 
 ######## Animated survey chart
 
@@ -372,7 +411,7 @@ survey_data_flourish <- usoc_long_carers %>%
          'Is caring for child?'=cared_for_inhh_child,
          'Is carer?'=is_carer_anywhere)
 
-write_xlsx(survey_data_flourish, paste0(R_workbench,"/usoc-carers-ndl/Flourish data/","survey_data_flourish.xlsx"))
+write_xlsx(survey_data_flourish, paste0(R_workbench,"/unpaid-carers/Flourish data/","survey_data_flourish.xlsx"))
 
 #Synthetic data
 
@@ -401,7 +440,7 @@ big_stats_table <- usoc_design_6to12 %>%
   mutate(total=sum(n,na.rm=TRUE)) %>%
   mutate(pct=n/total*100,
          n_pop=round(pct/100*pop21_uk,0),
-         n_pop_thous=round(n_pop/1000,0)) %>%
+         n_pop_thous=round(n_pop/500,0)) %>%
   select(-c("n_se","total")) %>%
   mutate(stratum=1:n()) %>% 
   select(stratum,is_carer_anywhere,agecat,caring_location,care_rel_anywhere,pct,n_pop,n_pop_thous)
@@ -413,7 +452,9 @@ dummy_data <- data.frame(dummy_id=1:sum(big_stats_table$n_pop_thous),stratum=NA)
 
   #Impute strata at random
 for (i in 1:max(big_stats_table$stratum)){
-  sampled_rows <- sample(dummy_data$dummy_id[which(is.na(dummy_data$stratum))],big_stats_table$n_pop_thous[i],replace=FALSE)
+  sampled_rows <- sample(dummy_data$dummy_id[which(is.na(dummy_data$stratum))], #Sample among unclaimed id's
+                         big_stats_table$n_pop_thous[i], #The number of people each stratum should have
+                         replace=FALSE) #without replacement
   dummy_data <- dummy_data %>%
     mutate(.,stratum=ifelse(dummy_id %in% sampled_rows,big_stats_table$stratum[i],stratum))
 }
@@ -432,7 +473,7 @@ dummy_data_flourish <- dummy_data %>%
          'Who are they caring for?'=care_rel_anywhere,
          'Is carer?'=is_carer_anywhere)
 
-write_xlsx(dummy_data_flourish, paste0(R_workbench,"/usoc-carers-ndl/Flourish data/","dummy_data_flourish.xlsx"))
+write_xlsx(dummy_data_flourish, paste0(R_workbench,"/unpaid-carers/Flourish data/","dummy_data_flourish.xlsx"))
 
 ####### Caring and work
 
@@ -449,7 +490,15 @@ usoc_design_6to12 %>%
   subset(wave_num=="12"&is_carer_inhh=="Yes"&jbstat!="Retired"&aideft!="") %>% 
   tbl_svysummary(include = c(aideft),
                  type=everything()~"categorical",
-                 by="three_rel_group",
+                 by="cared_for_inhh_child",
+                 label=list(aideft ~ "Does caring prevent work")) %>% 
+  bold_labels()
+
+usoc_design_6to12 %>%
+  subset(wave_num=="12"&is_carer_inhh=="Yes"&jbstat!="Retired"&aideft!="") %>% 
+  tbl_svysummary(include = c(aideft),
+                 type=everything()~"categorical",
+                 by="caredfor_inhh_rel",
                  label=list(aideft ~ "Does caring prevent work")) %>% 
   bold_labels()
 
@@ -457,62 +506,62 @@ usoc_design_6to12 %>%
 
 #Overall
 
-household_income_data <- usoc_design_6to12 %>%
-  subset(wave_num=="12") %>%
-  as_survey(.) %>%
-  group_by(is_carer_anywhere,equ_annual_income_dec) %>%
-  summarize(n = survey_total()) %>%
-  ungroup() %>%
-  filter(!is.na(is_carer_anywhere)&!is.na(equ_annual_income_dec)&equ_annual_income_dec!="") %>%
-  group_by(is_carer_anywhere) %>%
-  mutate(total_carer = sum(n)) %>%
-  ungroup() %>%
-  mutate(pct=n/total_carer*100)
-
-household_income_chart <- household_income_data %>%
-  ggplot(., aes(x=equ_annual_income_dec, y=pct/100, group=is_carer_anywhere, colour=is_carer_anywhere)) + 
-  geom_line(size=2) +
-  geom_point() +
-  geom_hline(yintercept=0.1, linetype="dashed", color = "black") +
-  ggtitle("Distribution of equivalised household income, by caring status") +
-  labs(col = "Is carer") +
-  scale_y_continuous(labels = scales::percent, name="Percent",lim=c(0,0.2)) +
-  xlab("Equivalised household income decile") +
-  theme_bw() +
-  scale_fill_brewer(palette="Set1") +
-  mytheme
-household_income_chart
+# household_income_data <- usoc_design_6to12 %>%
+#   subset(wave_num=="12") %>%
+#   as_survey(.) %>%
+#   group_by(is_carer_anywhere,equ_annual_income_dec) %>%
+#   summarize(n = survey_total()) %>%
+#   ungroup() %>%
+#   filter(!is.na(is_carer_anywhere)&!is.na(equ_annual_income_dec)&equ_annual_income_dec!="") %>%
+#   group_by(is_carer_anywhere) %>%
+#   mutate(total_carer = sum(n)) %>%
+#   ungroup() %>%
+#   mutate(pct=n/total_carer*100)
+# 
+# household_income_chart <- household_income_data %>%
+#   ggplot(., aes(x=equ_annual_income_dec, y=pct/100, group=is_carer_anywhere, colour=is_carer_anywhere)) + 
+#   geom_line(size=2) +
+#   geom_point() +
+#   geom_hline(yintercept=0.1, linetype="dashed", color = "black") +
+#   ggtitle("Distribution of equivalised household income, by caring status") +
+#   labs(col = "Is carer") +
+#   scale_y_continuous(labels = scales::percent, name="Percent",lim=c(0,0.2)) +
+#   xlab("Equivalised household income decile") +
+#   theme_bw() +
+#   scale_fill_brewer(palette="Set1") +
+#   mytheme
+# household_income_chart
 
 #By retirement age
 
-household_income_byret_data <- usoc_design_6to12 %>%
-  subset(wave_num=="12") %>%
-  as_survey(.) %>%
-  group_by(is_carer_anywhere,over65_or_retired,equ_annual_income_dec) %>%
-  summarize(n = survey_total()) %>%
-  ungroup() %>%
-  filter(!is.na(is_carer_anywhere)&!is.na(equ_annual_income_dec)&equ_annual_income_dec!=""&
-           !is.na(over65_or_retired)&over65_or_retired!="") %>%
-  group_by(is_carer_anywhere,over65_or_retired) %>%
-  mutate(total_carer = sum(n)) %>%
-  ungroup() %>%
-  mutate(pct=n/total_carer*100)
-
-household_income_chart_byret <- household_income_byret_data %>%
-  ggplot(., aes(x=equ_annual_income_dec, y=pct/100, group=is_carer_anywhere, colour=is_carer_anywhere)) +
-  facet_wrap(~over65_or_retired,ncol=2) +
-  geom_line(size=2) +
-  geom_point() +
-  geom_hline(yintercept=0.1, linetype="dashed", color = "black") +
-  ggtitle("Distribution of equivalised household income, by caring status and retirement status") +
-  labs(col = "Is carer") +
-  scale_y_continuous(labels = scales::percent, name="Percent",lim=c(0,0.2)) +
-  xlab("Equivalised household income decile") +
-  theme_bw() +
-  scale_fill_brewer(palette="Set1") +
-  mytheme
-
-household_income_chart_byret
+# household_income_byret_data <- usoc_design_6to12 %>%
+#   subset(wave_num=="12") %>%
+#   as_survey(.) %>%
+#   group_by(is_carer_anywhere,over65_or_retired,equ_annual_income_dec) %>%
+#   summarize(n = survey_total()) %>%
+#   ungroup() %>%
+#   filter(!is.na(is_carer_anywhere)&!is.na(equ_annual_income_dec)&equ_annual_income_dec!=""&
+#            !is.na(over65_or_retired)&over65_or_retired!="") %>%
+#   group_by(is_carer_anywhere,over65_or_retired) %>%
+#   mutate(total_carer = sum(n)) %>%
+#   ungroup() %>%
+#   mutate(pct=n/total_carer*100)
+# 
+# household_income_chart_byret <- household_income_byret_data %>%
+#   ggplot(., aes(x=equ_annual_income_dec, y=pct/100, group=is_carer_anywhere, colour=is_carer_anywhere)) +
+#   facet_wrap(~over65_or_retired,ncol=2) +
+#   geom_line(size=2) +
+#   geom_point() +
+#   geom_hline(yintercept=0.1, linetype="dashed", color = "black") +
+#   ggtitle("Distribution of equivalised household income, by caring status and retirement status") +
+#   labs(col = "Is carer") +
+#   scale_y_continuous(labels = scales::percent, name="Percent",lim=c(0,0.2)) +
+#   xlab("Equivalised household income decile") +
+#   theme_bw() +
+#   scale_fill_brewer(palette="Set1") +
+#   mytheme
+# 
+# household_income_chart_byret
 
 #By retirement age and hours worked
 
@@ -544,4 +593,4 @@ carers_income_hours_flourish <- hours_deprivation_data %>%
          `Carers: 20+ hours a week`=`20+ hours per week`)
 
 fwrite(carers_income_hours_flourish,
-       paste0(R_workbench,"/Charts/Carers/","carers_income_hours_flourish.csv"))
+       paste0(R_workbench,"/unpaid-carers/Flourish data/","carers_income_hours_flourish.csv"))

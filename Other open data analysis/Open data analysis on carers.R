@@ -56,6 +56,17 @@ carers_census_2011_age_sex <- s3read_using(read_excel,
 ################### 2021 Census data ##################
 #######################################################
 
+#Northern Ireland
+
+ni_carers_census_2021 <-  s3read_using(read_excel,
+                                    object = paste0(ASC_subfolder,"/2011 Census/northern-ireland-census-2021-ms-d17.xlsx"),
+                                    bucket = IHT_bucket,
+                                    sheet="MS-D17",skip=23) %>%
+  select(1:4) %>%
+  mutate(pct_carer_21=(1-`All usual residents aged 5 and over:\r\nProvides no unpaid care`)*100) %>%
+  select(Geography,`Geography code`,pct_carer_21) %>%
+  rename(Code=`Geography code`)
+
 #Raw
 
 carers_census_2021 <-  s3read_using(fread,
@@ -106,7 +117,7 @@ carers_census_2021_age_sex <- s3read_using(read_excel,
 dwp_part1_total <- s3read_using(read_excel,
                                         object = paste0(ASC_subfolder,"/DWP/dwp-benefits-part1.xlsx"), # File to open
                                         bucket = IHT_bucket,
-                                        sheet="Table 1",skip=3) %>%
+                                        sheet=4,skip=10) %>%
   select(-1) %>%
   filter(!is.na(`Feb-18`)) %>%
   rename(Area="...2") %>%
@@ -200,6 +211,22 @@ LA_data <- s3read_using(read_excel,
 ################### Population data ##################
 ######################################################
 
+# Usual resident population
+
+pop21cens <- s3read_using(read_excel,
+                          object = paste0(ASC_subfolder,"/2011 Census/census2021firstresultsenglandwales1(1).xlsx"), # File to open
+                          sheet="P02",
+                          bucket = IHT_bucket,
+                          skip=7) %>%
+  select(1:4) %>%
+  rename(Code=`Area code [note 2]`,
+         Geography=`Area name`,
+         pop21_cens_all=`All persons`) %>%
+  mutate(pop21_cens_5plus=pop21_cens_all-`Aged 4 years and under\r\n[note 12]`) %>%
+  select(Code,Geography,pop21_cens_all,pop21_cens_5plus)
+
+# ONS mid-year population estimates
+
 pop_part1 <- s3read_using(fread,
                           object = paste0(ASC_subfolder,"/2011 Census/MYEB1_detailed_population_estimates_series_UK_(2020_geog20).csv"), # File to open
                           bucket = IHT_bucket) %>% 
@@ -269,6 +296,32 @@ pop_ons <- plyr::rbind.fill(pop_part1,pop_part2) %>%
   mutate(age=str_replace_all(age,"pop","") %>% str_replace_all(.,"plus","+"),
          geography=ifelse(geography=="United Kingdom","UK",geography) %>% str_to_title(.))
 rm(pop_part1,pop_part2)
+
+#####################################################
+################### Census hex-map ##################
+#####################################################
+
+### Percentage carer in 2021
+
+pct_carers_2021 <- carers_census_2021 %>%
+  right_join(.,select(pop21cens,Code,Geography,pop21_cens_5plus),by=c("Lower Tier Local Authorities Code"="Code")) %>% 
+  rename(Code=`Lower Tier Local Authorities Code`) %>% 
+  mutate(pct_carer_21=carers21/pop21_cens_5plus*100,
+         Geography=str_to_title(Geography)) %>%
+  select(Code,Geography,pct_carer_21,) %>%
+  plyr::rbind.fill(.,ni_carers_census_2021)
+
+#Flourish
+
+utla_hex_template <- s3read_using(read_excel,
+                                  object = paste0(ASC_subfolder,"/hexmap-lad-template.xlsx"), # File to open
+                                  bucket = IHT_bucket,
+                                  sheet=1)
+
+flourish_pct_carers <- utla_hex_template %>%
+  left_join(.,pct_carers_2021,by=c("lacode"="Code"))
+
+fwrite(flourish_pct_carers, paste0(R_workbench,"/Charts/Carers/","flourish_pct_carers.csv"))
 
 ##########################################################################
 ################### LA: how many carers getting support ##################
