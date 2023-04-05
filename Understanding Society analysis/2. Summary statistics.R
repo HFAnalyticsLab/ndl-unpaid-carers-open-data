@@ -40,6 +40,9 @@ usoc_long_carers <- s3read_using(fread
 ####### Additional cleaning
 
 usoc_long_carers <- usoc_long_carers %>%
+  mutate(age70=case_when(agedv>=70 ~ "Over 70",
+                         agedv<70 ~ "Under 70",
+                         TRUE ~ "NA")) %>% 
   mutate(.,finnow=fct_relevel(finnow, c("Living comfortably","Doing alright","Just about getting by",
                                                   "Finding it quite difficult","Finding it very difficult"))) %>%
   mutate(equ_annual_income_dec=fct_relevel(equ_annual_income_dec,
@@ -192,21 +195,17 @@ usoc_design_6to12 %>%
 latest_parent_carers <- usoc_design_6to12 %>%
   subset(wave_num=="12"&cared_for_inhh_child==1)
 
-latest_parent_carers
+age_carers_table <- usoc_design_6to12 %>%
+  subset(wave_num=="12"&!is.na(is_carer_anywhere)&!is.na(agecatlong)) %>%
+  as_survey(.) %>%
+  group_by(is_carer_anywhere,agecatlong) %>%
+  summarize(n = survey_total()) %>%
+  ungroup() %>%
+  group_by(is_carer_anywhere) %>%
+  mutate(n_age=sum(n,na.rm=TRUE)) %>%
+  ungroup() %>%
+  mutate(pct=n/n_age*100)
 
-svyquantile(~agedv, latest_parent_carers, seq(0,1,by=0.1),ci=FALSE)
-
-# age_carers_table <- usoc_design_6to12 %>%
-#   subset(wave_num=="12"&!is.na(is_carer_anywhere)&!is.na(agecatlong)) %>%
-#   as_survey(.) %>%
-#   group_by(is_carer_anywhere,agecatlong) %>% 
-#   summarize(n = survey_total()) %>%
-#   ungroup() %>%
-#   group_by(is_carer_anywhere) %>%
-#   mutate(n_age=sum(n,na.rm=TRUE)) %>% 
-#   ungroup() %>%
-#   mutate(pct=n/n_age*100)
-# 
 # age_carers_table_census_comparison <- usoc_design_6to12 %>%
 #   subset(wave_num=="12"&!is.na(is_carer_anywhere)&!is.na(agecatlong_cens)) %>%
 #   as_survey(.) %>%
@@ -305,23 +304,69 @@ usoc_design_6to12 %>%
 #   bold_labels()
 
 #Carers under 70
-usoc_design_6to12 %>%
+under70_bylocation <- usoc_design_6to12 %>%
   subset(wave_num=="12"&is_carer_anywhere=="Yes"&agedv<=70) %>% 
-  tbl_svysummary(include = c(cares_parent_anywhere),
-                 type=everything()~"categorical",
-                 label=list(is_carer_anywhere = "Carer",
-                            cares_parent_anywhere = "Cares for parent")) %>% 
-  bold_labels()
-
-#Cares over 70, by location
-usoc_design_6to12 %>%
-  subset(wave_num=="12"&is_carer_anywhere=="Yes"&agedv>70) %>% 
-  tbl_svysummary(include = c(cared_for_inhh_partner),
+  tbl_svysummary(include = c(cares_parent_anywhere,cared_for_inhh_partner),
                  type=everything()~"categorical",
                  by="caring_location",
                  label=list(is_carer_anywhere = "Carer",
-                            cared_for_inhh_partner = "Cares for partner")) %>% 
-  bold_labels()
+                            cares_parent_anywhere = "Cares for parent (both in-household and outside household quest.)",
+                            cared_for_inhh_partner = "Cares for partner (in-household questionnaire only)")) %>% 
+  bold_labels() %>%
+  modify_caption("**Carers under 70**")
+
+under70_overall <- usoc_design_6to12 %>%
+  subset(wave_num=="12"&is_carer_anywhere=="Yes"&agedv<=70) %>% 
+  tbl_svysummary(include = c(cares_parent_anywhere,cared_for_inhh_partner),
+                 type=everything()~"categorical",
+                 label=list(is_carer_anywhere = "Carer",
+                            cares_parent_anywhere = "Cares for parent (both in-household and outside household quest.)",
+                            cared_for_inhh_partner = "Cares for partner (in-household questionnaire only)")) %>% 
+  bold_labels() %>%
+  modify_caption("**Carers under 70**") 
+
+tbl_merge_under70 <-
+  tbl_merge(
+    tbls = list(under70_overall,under70_bylocation),
+    tab_spanner = c("**Overall**", "**By location**")
+  )
+
+tbl_merge_under70
+
+#Carers over 70
+over70_bylocation <- usoc_design_6to12 %>%
+  subset(wave_num=="12"&is_carer_anywhere=="Yes"&agedv>70) %>% 
+  tbl_svysummary(include = c(cares_parent_anywhere,cared_for_inhh_partner),
+                 type=everything()~"categorical",
+                 by="caring_location",
+                 label=list(is_carer_anywhere = "Carer",
+                            cares_parent_anywhere = "Cares for parent (both in-household and outside household quest.)",
+                            cared_for_inhh_partner = "Cares for partner (in-household questionnaire only)")) %>% 
+  bold_labels() %>%
+  modify_caption("**Carers over 70**")
+
+over70_overall <- usoc_design_6to12 %>%
+  subset(wave_num=="12"&is_carer_anywhere=="Yes"&agedv>70) %>% 
+  tbl_svysummary(include = c(cares_parent_anywhere,cared_for_inhh_partner),
+                 type=everything()~"categorical",
+                 label=list(is_carer_anywhere = "Carer",
+                            cares_parent_anywhere = "Cares for parent (both in-household and outside household quest.)",
+                            cared_for_inhh_partner = "Cares for partner (in-household questionnaire only)")) %>% 
+  bold_labels() %>%
+  modify_caption("**Carers over 70**") 
+
+tbl_merge_over70 <-
+  tbl_merge(
+    tbls = list(over70_overall,over70_bylocation),
+    tab_spanner = c("**Overall**", "**By location**")
+  )
+
+tbl_merge_over70
+
+#everyone over 70 outside-household cares for a parent: (297+49+349)/742 [the total number of carers over 70] - > 94%
+#nobody over 70 outside-household cares for a parent: (49+349)/742 [the total number of carers over 70] - > 53%
+#(49+349)/742
+#(2035)/(3878)
 
 ####### Age of different groups
 
