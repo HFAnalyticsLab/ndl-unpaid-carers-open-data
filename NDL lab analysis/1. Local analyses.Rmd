@@ -68,7 +68,14 @@ leeds <- ndl_carers_central %>%  filter(local_authority=="Leeds")
 knitr::include_graphics("NDL local authorities.png")
 ```
 
+## Link to central analysis plan
+
+[LINK TO ANALYSIS PLAN ON SHAREPOINT](https://thehealthfoundation98.sharepoint.com/:p:/s/thf_project/projects_programmes/00223/ETuWWtMSOLhAsjhQlKwGsL0Bsw-I7wPZO_gjhNwRJZI3-g?e=eBPdod)
+
 ## Table 1: Lookback period {.tabset}
+
+* Labs looked for SNOMED/READ unpaid carer codes and ASC data flags indicating someone is an unpaid carers during this period - [refer to analysis 1 in central analysis plan](https://thehealthfoundation98.sharepoint.com/:p:/s/thf_project/projects_programmes/00223/ETuWWtMSOLhAsjhQlKwGsL0Bsw-I7wPZO_gjhNwRJZI3-g?e=eBPdod).
+* Each person has an index date during this period, corresponding to the earliest GP or ASC event.
 
 ### Neath Port Talbot (Wales)
 
@@ -137,6 +144,9 @@ leeds %>%
 
 ## Chart 1: Overlap between GP and ASC data {.tabset}
 
+* Based on data pooled over the entire period
+* **How to read:** In Neath Port Talbot, over the entire period, 1,644 (1,584+60) people were ever identified as unpaid carers in GP records (81%) and 457 (457+60) were ever identified as unpaid carers in ASC data (21%). 60 people were identified in both types of records (3%).
+
 ### Neath Port Talbot (Wales)
 
 ```{r, eval=TRUE, echo=FALSE, message=FALSE, warning=FALSE}
@@ -204,6 +214,8 @@ plot(euler_object,quantities = list(type = c("percent", "counts")))
 
 ## Chart 2: Carers in administrative records compared to census [absolute] {.tabset}
 
+* **How to read:** In Neath Port Talbot, over the entire period, 2,024 people were identified as unpaid carers in either GP or ASC records (GP ∪ ASC). According to the 2021 Census, there were 16,565 unpaid carers in Neath Port Talbot in March 2021.
+
 ### Neath Port Talbot (Wales)
 
 ```{r, eval=TRUE, echo=FALSE, message=FALSE, warning=FALSE}
@@ -212,6 +224,10 @@ chart1_data <- npt %>%
   filter(source %in% c("GP or LA","2021 Census")) %>%
   mutate(count=as.numeric(count),
          percent=as.numeric(count)/sum(as.numeric(count)))
+
+chart1_data %>%
+  kbl() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
 
 ggplot(data=chart1_data, aes(x=source,
                              y=count,
@@ -232,6 +248,10 @@ chart1_data <- swansea %>%
   mutate(count=as.numeric(count),
          percent=as.numeric(count)/sum(as.numeric(count)))
 
+chart1_data %>%
+  kbl() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
+
 ggplot(data=chart1_data, aes(x=source,
                              y=count,
                              fill=source)) +
@@ -250,6 +270,10 @@ chart1_data <- nwl %>%
   filter(source %in% c("GP","2021 Census")) %>%
   mutate(count=as.numeric(count),
          percent=as.numeric(count)/sum(as.numeric(count)))
+
+chart1_data %>%
+  kbl() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
 
 ggplot(data=chart1_data, aes(x=source,
                              y=count,
@@ -270,6 +294,10 @@ chart1_data <- law %>%
   mutate(count=as.numeric(count),
          percent=as.numeric(count)/sum(as.numeric(count)))
 
+chart1_data %>%
+  kbl() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
+
 ggplot(data=chart1_data, aes(x=source,
                              y=count,
                              fill=source)) +
@@ -288,6 +316,10 @@ chart1_data <- leeds %>%
   filter(source %in% c("GP or LA","2021 Census")) %>%
   mutate(count=as.numeric(count),
          percent=as.numeric(count)/sum(as.numeric(count)))
+
+chart1_data %>%
+  kbl() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
 
 ggplot(data=chart1_data, aes(x=source,
                              y=count,
@@ -301,6 +333,8 @@ ggplot(data=chart1_data, aes(x=source,
 
 ## Chart 3: Carers in administrative records compared to census [relative] {.tabset}
 
+* **How to read:** In Neath Port Talbot, over the entire period, 2,024 people were identified as unpaid carers in either GP or ASC records (GP ∪ ASC). According to the 2021 Census, there were 16,565 unpaid carers in Neath Port Talbot in March 2021. Therefore, 11% of unpaid carers in Neath Port Talbot were successfully identified in administrative records - _assuming they are the one and same population_. 
+
 ### Neath Port Talbot (Wales)
 
 ```{r, eval=TRUE, echo=FALSE, message=FALSE, warning=FALSE}
@@ -309,6 +343,10 @@ chart1_data <- npt %>%
   filter(source %in% c("GP or LA","2021 Census")) %>%
   mutate(count=as.numeric(count),
          percent=as.numeric(count)/sum(as.numeric(count)))
+
+chart1_data %>%
+  kbl() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
 
 chart1_data %>%
   ggplot() +
@@ -332,6 +370,10 @@ chart1_data <- swansea %>%
          percent=as.numeric(count)/sum(as.numeric(count)))
 
 chart1_data %>%
+  kbl() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
+
+chart1_data %>%
   ggplot() +
   aes(x=1, percent, fill=source) +
   geom_bar(stat="identity") +
@@ -351,6 +393,10 @@ chart1_data <- nwl %>%
   filter(source %in% c("GP","2021 Census")) %>%
   mutate(count=as.numeric(count),
          percent=as.numeric(count)/sum(as.numeric(count)))
+
+chart1_data %>%
+  kbl() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
 
 chart1_data %>%
   ggplot() +
@@ -374,6 +420,10 @@ chart1_data <- law %>%
          percent=as.numeric(count)/sum(as.numeric(count)))
 
 chart1_data %>%
+  kbl() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
+
+chart1_data %>%
   ggplot() +
   aes(x=1, percent, fill=source) +
   geom_bar(stat="identity") +
@@ -393,6 +443,10 @@ chart1_data <- leeds %>%
   filter(source %in% c("GP or LA","2021 Census")) %>%
   mutate(count=as.numeric(count),
          percent=as.numeric(count)/sum(as.numeric(count)))
+
+chart1_data %>%
+  kbl() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
 
 chart1_data %>%
   ggplot() +
@@ -408,6 +462,8 @@ chart1_data %>%
 
 ## Chart 4: Sex distribution of carer cohorts {.tabset}
 
+* **How to read:** In Neath Port Talbot, over the entire period, 68% of unpaid carers identified in GP records were female compared to 70% of unpaid carers identified in ASC records. 
+
 ### Neath Port Talbot (Wales)
 
 ```{r, eval=TRUE, echo=FALSE, message=FALSE, warning=FALSE}
@@ -418,6 +474,10 @@ sex_by_source <- npt %>%
   ungroup() %>%
   mutate(pct_source=count/source_total*100) %>% 
   arrange(source,type_level)
+
+sex_by_source %>%
+  kbl() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
 
 ggplot(sex_by_source, aes(fill=source, y=pct_source/100, x=type_level)) + 
   geom_bar(position="dodge", stat="identity") +
@@ -438,6 +498,10 @@ sex_by_source <- swansea %>%
   mutate(pct_source=count/source_total*100) %>% 
   arrange(source,type_level)
 
+sex_by_source %>%
+  kbl() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
+
 ggplot(sex_by_source, aes(fill=source, y=pct_source/100, x=type_level)) + 
   geom_bar(position="dodge", stat="identity") +
   scale_fill_brewer(palette="Set2", name = "Source") +
@@ -456,6 +520,10 @@ sex_by_source <- nwl %>%
   ungroup() %>%
   mutate(pct_source=count/source_total*100) %>% 
   arrange(source,type_level)
+
+sex_by_source %>%
+  kbl() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
 
 ggplot(sex_by_source, aes(fill=source, y=pct_source/100, x=type_level)) + 
   geom_bar(position="dodge", stat="identity") +
@@ -476,6 +544,10 @@ sex_by_source <- law %>%
   mutate(pct_source=count/source_total*100) %>% 
   arrange(source,type_level)
 
+sex_by_source %>%
+  kbl() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
+
 ggplot(sex_by_source, aes(fill=source, y=pct_source/100, x=type_level)) + 
   geom_bar(position="dodge", stat="identity") +
   scale_fill_brewer(palette="Set2", name = "Source") +
@@ -495,6 +567,10 @@ sex_by_source <- leeds %>%
   mutate(pct_source=count/source_total*100) %>% 
   arrange(source,type_level)
 
+sex_by_source %>%
+  kbl() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
+
 ggplot(sex_by_source, aes(fill=source, y=pct_source/100, x=type_level)) + 
   geom_bar(position="dodge", stat="identity") +
   scale_fill_brewer(palette="Set2", name = "Source") +
@@ -504,6 +580,8 @@ ggplot(sex_by_source, aes(fill=source, y=pct_source/100, x=type_level)) +
 ```
 
 ## Chart 5: Age distribution of carer cohorts {.tabset}
+
+* **How to read:** In Neath Port Talbot, over the entire period, 21% of unpaid carers identified in GP records were under the age of 40 compared to 6% of unpaid carers identified in ASC records.
 
 ### Neath Port Talbot (Wales)
 
@@ -516,6 +594,10 @@ age_by_source <- npt %>%
   mutate(pct_source=count/source_total*100,
          type_level=fct_relevel(type_level,c("under 40","40-49","50-59","60-69","70-79","80+"))) %>% 
   arrange(source,type_level)
+
+age_by_source %>%
+  kbl() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
 
 ggplot(age_by_source, aes(fill=source, y=pct_source/100, x=type_level)) + 
   geom_bar(position="dodge", stat="identity") +
@@ -537,6 +619,10 @@ age_by_source <- swansea %>%
          type_level=fct_relevel(type_level,c("under 40","40-49","50-59","60-69","70-79","80+"))) %>% 
   arrange(source,type_level)
 
+age_by_source %>%
+  kbl() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
+
 ggplot(age_by_source, aes(fill=source, y=pct_source/100, x=type_level)) + 
   geom_bar(position="dodge", stat="identity") +
   scale_fill_brewer(palette="Set2", name = "Source") +
@@ -556,6 +642,10 @@ age_by_source <- nwl %>%
   mutate(pct_source=count/source_total*100,
          type_level=fct_relevel(type_level,c("18-29","30-39","40-49","50-59","60-69","70-79","80+"))) %>% 
   arrange(source,type_level)
+
+age_by_source %>%
+  kbl() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
 
 ggplot(age_by_source, aes(fill=source, y=pct_source/100, x=type_level)) + 
   geom_bar(position="dodge", stat="identity") +
@@ -577,6 +667,10 @@ age_by_source <- law %>%
          type_level=fct_relevel(type_level,c("18-29","30-39","40-49","50-59","60-69","70-79","80+"))) %>% 
   arrange(source,type_level)
 
+age_by_source %>%
+  kbl() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
+
 ggplot(age_by_source, aes(fill=source, y=pct_source/100, x=type_level)) + 
   geom_bar(position="dodge", stat="identity") +
   scale_fill_brewer(palette="Set2", name = "Source") +
@@ -597,6 +691,10 @@ age_by_source <- leeds %>%
          type_level=fct_relevel(type_level,c("18-29","30-39","40-49","50-59","60-69","70-79","80+"))) %>% 
   arrange(source,type_level)
 
+age_by_source %>%
+  kbl() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
+
 ggplot(age_by_source, aes(fill=source, y=pct_source/100, x=type_level)) + 
   geom_bar(position="dodge", stat="identity") +
   scale_fill_brewer(palette="Set2", name = "Source") +
@@ -606,6 +704,8 @@ ggplot(age_by_source, aes(fill=source, y=pct_source/100, x=type_level)) +
 ```
 
 ## Chart 6: Sex bias of carer cohorts {.tabset}
+
+* **How to read:** In Neath Port Talbot, over the entire period, 11% of "all" female carers were identified in GP records compared to 8% of "all" male carers. 3% of "all" female carers were identified in ASC records, compared to 2% of "all" male carers. 
 
 ### Neath Port Talbot (Wales)
 
@@ -642,6 +742,10 @@ la_cut <- npt %>%
 
 both_cuts <- plyr::rbind.fill(gp_cut,la_cut)
 rm(gp_cut,la_cut)
+
+both_cuts %>%
+  kbl() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
 
 both_cuts %>%
   ggplot() +
@@ -693,6 +797,10 @@ both_cuts <- plyr::rbind.fill(gp_cut,la_cut)
 rm(gp_cut,la_cut)
 
 both_cuts %>%
+  kbl() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
+
+both_cuts %>%
   ggplot() +
   aes(x=type_level, y=pct/100, fill=identified) +
   geom_bar(stat="identity") +
@@ -723,9 +831,12 @@ gp_cut <- nwl %>%
   pivot_longer(!c(local_authority,source,type_level), names_to = "identified", values_to = "pct") %>%
   mutate(identified=str_replace_all(identified,"pct_","") %>%  str_replace_all(.,"_"," "))
 
-
 both_cuts <- plyr::rbind.fill(gp_cut)
 rm(gp_cut)
+
+both_cuts %>%
+  kbl() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
 
 both_cuts %>%
   ggplot() +
@@ -775,6 +886,10 @@ both_cuts <- plyr::rbind.fill(gp_cut,la_cut)
 rm(gp_cut,la_cut)
 
 both_cuts %>%
+  kbl() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
+
+both_cuts %>%
   ggplot() +
   aes(x=type_level, y=pct/100, fill=identified) +
   geom_bar(stat="identity") +
@@ -822,6 +937,10 @@ both_cuts <- plyr::rbind.fill(gp_cut,la_cut)
 rm(gp_cut,la_cut)
 
 both_cuts %>%
+  kbl() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
+
+both_cuts %>%
   ggplot() +
   aes(x=type_level, y=pct/100, fill=identified) +
   geom_bar(stat="identity") +
@@ -835,6 +954,8 @@ both_cuts %>%
 ```
 
 ## Chart 7: Age bias of carer cohorts {.tabset}
+
+* **How to read:** In Neath Port Talbot, over the entire period, 12% of "all" carers age 80 and over were identified in GP records compared to 10% of "all" carers under the age of 40. 8% of "all" carers age 80 and over were identified in ASC records, compared to 1% of "all" carers under the age of 40. 
 
 ### Neath Port Talbot (Wales)
 
@@ -872,6 +993,10 @@ la_cut <- npt %>%
 both_cuts <- plyr::rbind.fill(gp_cut,la_cut) %>%
   mutate(type_level=fct_relevel(type_level,c("under 40","40-49","50-59","60-69","70-79","80+")))
 rm(gp_cut,la_cut)
+
+both_cuts %>%
+  kbl() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
 
 both_cuts %>%
   ggplot() +
@@ -924,6 +1049,10 @@ both_cuts <- plyr::rbind.fill(gp_cut,la_cut) %>%
 rm(gp_cut,la_cut)
 
 both_cuts %>%
+  kbl() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
+
+both_cuts %>%
   ggplot() +
   aes(x=type_level, y=pct/100, fill=identified) +
   geom_bar(stat="identity") +
@@ -957,6 +1086,10 @@ gp_cut <- nwl %>%
 both_cuts <- plyr::rbind.fill(gp_cut) %>%
   mutate(type_level=fct_relevel(type_level,c("18-29","30-39","40-49","50-59","60-69","70-79","80+")))
 rm(gp_cut,la_cut)
+
+both_cuts %>%
+  kbl() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
 
 both_cuts %>%
   ggplot() +
@@ -1007,6 +1140,10 @@ both_cuts <- plyr::rbind.fill(gp_cut,la_cut) %>%
 rm(gp_cut,la_cut)
 
 both_cuts %>%
+  kbl() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
+
+both_cuts %>%
   ggplot() +
   aes(x=type_level, y=pct/100, fill=identified) +
   geom_bar(stat="identity") +
@@ -1053,6 +1190,10 @@ la_cut <- leeds %>%
 both_cuts <- plyr::rbind.fill(gp_cut,la_cut) %>%
   mutate(type_level=fct_relevel(type_level,c("18-29","30-39","40-49","50-59","60-69","70-79","80+")))
 rm(gp_cut,la_cut)
+
+both_cuts %>%
+  kbl() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
 
 both_cuts %>%
   ggplot() +
