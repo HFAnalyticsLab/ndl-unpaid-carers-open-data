@@ -23,11 +23,17 @@ This repository includes two separate folders:
 
 * **`1. Create variables carers.R`** This file starts with a clean Understanding Society file in long format called 'USOC long.csv'. Then, it proceeds to create the new variables required for our analysis on unpaid carers. Some of these new variables (e.g. 'relationship to cared-for person' or 'maximum age of cared-for people') require a 'linkage' between carers and the people they care for in their households. Because this is a large survey and dataset, it can take ~30 minutes to run even after parallelizing these computations. If you wish to add variables about people's health conditions, please add this portion of data (**`Coding medical conditions with Usoc.R`**) back into the file.
 
-* **`2. Summary statistics.R`** In this file, we take our Understanding Society data with our new carer variables and we apply survey weights before producing various descriptive statistics.
+* **`2. Summary statistics.R`** Using this file, we take our Understanding Society data with our new carer variables and we apply survey weights before producing various descriptive statistics.
 
 **Other open data analysis**
 
-* **`Open data analysis on carers.R`** In this file, we produce additional statistics using data from the ONS, NHS Digital and DWP.
+* **`Other open data analysis on carers/Open data analysis on carers.R`** Using this file, we produce additional statistics using data from the ONS, NHS Digital and DWP.
+
+* **`NDL lab analysis/NDL areas census analysis/NDL areas census analysis.Rmd`** Analysis of hours spent caring and age of carers using 2021 Census data.
+
+**Analysis of NDL partner data**
+
+* **`NDL lab analysis/Local analyses.Rmd`** Summary of central analyses on unpaid carers produced by NDL partners.
 
 ### Requirements
 
