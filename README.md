@@ -33,7 +33,13 @@ This repository includes two separate folders:
 
 **Analysis of NDL partner data**
 
-* **`NDL lab analysis/Local analyses.Rmd`** Summary of central analyses on unpaid carers produced by NDL partners.
+* **`NDL lab analysis/0. Combining data.R`** Script that cleans data from NDL partner analyses, 2011 Census and appends into a single, clean data file for use in consolidated analysis.
+
+* **`NDL lab analysis/1. Local analyses.Rmd`** Summary of central analyses on unpaid carers produced by NDL partners. This markdown results in an HTML file being created inside this folder.
+
+**Technical appendix**
+
+* **`NDL lab analysis/2. Technical appendix.Rmd`** Technical appendix for central analysis carried out by NDL partners. This markdown results in an HTML file being created inside this folder.
 
 ### Requirements
 
