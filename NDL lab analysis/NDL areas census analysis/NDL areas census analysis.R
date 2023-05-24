@@ -65,6 +65,11 @@ carers_census_2021_age_sex_hours_eng <- s3read_using(read_excel,
                                               bucket = IHT_bucket,
                                               sheet="Table 17",skip=3)
 
+carers_census_2021_sex_hours_eng <- s3read_using(read_excel,
+                                                 object = paste0(ASC_subfolder,"/2021 Census/sc012021reftablesengland1.xlsx"),
+                                                 bucket = IHT_bucket,
+                                                 sheet="Table 18",skip=3)
+
 #Wales
 
 carers_census_2021_age_sex_wales <- s3read_using(read_excel,
@@ -77,6 +82,11 @@ carers_census_2021_age_sex_hours_wales <- s3read_using(read_excel,
                                                      bucket = IHT_bucket,
                                                      sheet="Table 11",skip=3)
 
+carers_census_2021_sex_hours_wales <- s3read_using(read_excel,
+                                                   object = paste0(ASC_subfolder,"/2021 Census/sc012021reftableswales1.xlsx"),
+                                                   bucket = IHT_bucket,
+                                                   sheet="Table 12",skip=3)
+
 #Combined
 
 carers_census_2021_age_sex_engwales <- plyr::rbind.fill(carers_census_2021_age_sex_eng,
@@ -84,6 +94,10 @@ carers_census_2021_age_sex_engwales <- plyr::rbind.fill(carers_census_2021_age_s
 
 carers_census_2021_age_sex_hours_engwales <- plyr::rbind.fill(carers_census_2021_age_sex_hours_eng,
                                                               carers_census_2021_age_sex_hours_wales)
+
+carers_census_2021_sex_hours_engwales <- plyr::rbind.fill(carers_census_2021_sex_hours_eng,
+                                                              carers_census_2021_sex_hours_wales)
+
 
 ##########################################
 ################### Sex ##################

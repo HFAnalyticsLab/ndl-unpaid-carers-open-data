@@ -27,7 +27,7 @@ This repository includes two separate folders:
 
 **Other open data analysis**
 
-* **`Other open data analysis on carers/Open data analysis on carers.R`** Using this file, we produce additional statistics using data from the ONS, NHS Digital and DWP.
+* **`Other open data analysis on carers/Open data analysis on carers for long chart.R`** Using this file, we produce additional statistics using data from the ONS, NHS Digital and DWP.
 
 * **`NDL lab analysis/NDL areas census analysis/NDL areas census analysis.Rmd`** Analysis of hours spent caring and age of carers using 2021 Census data.
 

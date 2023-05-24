@@ -332,7 +332,7 @@ LA_data %>%
   mutate(age="0+",Year=as.character(Year)) %>%
   left_join(.,pop_ons,by=c("Geography"="geography","Year"="year","age"="age")) %>%
   mutate(carers_census=ifelse(Year=="2021",carer21_england,NA)) %>%
-  mutate(pct_cares_req_support=`Number requests`/carers_census*100)
+  mutate(pct_carers_req_support=`Number requests`/carers_census*100)
 
 ##########################################################################
 ################### DWP: how many carers getting support ##################

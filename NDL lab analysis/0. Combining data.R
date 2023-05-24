@@ -304,7 +304,7 @@ rm(leeds_table_one,leeds_table_sex,leeds_table_age,leeds_table_imd)
 #All carers
 
 liverpoolwirral_table_one <- s3read_using(fread,
-                                          object = "NDL-carers-partner-data/Liverpool and Wirral/table1.csv",
+                                          object = "NDL-carers-partner-data/Liverpool and Wirral/Central/Analysis 1/table1.csv",
                                           bucket = IHT_bucket)
 
 liverpoolwirral_overall <- liverpoolwirral_table_one %>%
@@ -330,11 +330,11 @@ rm(liverpoolwirral_table_one)
 #By demographics
 
 liverpoolwirral_demos <- s3read_using(fread,
-                                      object = "NDL-carers-partner-data/Liverpool and Wirral/HF_carers_count_rates_age_groups_IMD_LW.csv",
+                                      object = "NDL-carers-partner-data/Liverpool and Wirral/Central/Analysis 1/HF_carer_counts_table.csv",
                                       bucket = IHT_bucket) %>%
-  select(age_group,gender,imd_decile,carer_count_GP:carer_count_GP_or_ASC) %>%
-  pivot_longer(!c("age_group","gender","imd_decile"), names_to = "source", values_to = "count") %>%
-  mutate(source=str_replace_all(source,"carer_count_","") %>%  str_replace_all(.,"ASC","LA") %>% str_replace_all(.,"_"," "))
+  select(age_group,gender,ethnic_group,regd,count) %>%
+  rename(source=regd, count=count) %>% 
+  mutate(source=str_replace_all(source,"carer_count_","") %>% str_replace_all(.,"asc","LA") %>% str_replace_all(.,"gp","GP") %>% str_replace_all(.,"_"," "))
 
 liverpoolwirral_sex <- liverpoolwirral_demos %>%
   group_by(gender,source) %>%
@@ -342,7 +342,8 @@ liverpoolwirral_sex <- liverpoolwirral_demos %>%
   ungroup() %>%
   mutate(type="sex",
          local_authority="Liverpool and Wirral") %>%
-  rename(type_level=gender)
+  rename(type_level=gender) %>%
+  filter(type_level!="Unknown"&source!="")
 
 liverpoolwirral_age <- liverpoolwirral_demos %>%
   group_by(age_group,source) %>%
@@ -350,25 +351,18 @@ liverpoolwirral_age <- liverpoolwirral_demos %>%
   ungroup() %>%
   mutate(type="age",
          local_authority="Liverpool and Wirral") %>%
-  rename(type_level=age_group)
+  rename(type_level=age_group) %>%
+  filter(type_level!=""&source!="")
 
-liverpoolwirral_imd <- liverpoolwirral_demos %>%
-  group_by(imd_decile,source) %>%
-  summarise(count=sum(count,na.rm=TRUE)) %>% 
-  ungroup() %>%
-  mutate(type="imd",
-         local_authority="Liverpool and Wirral") %>%
-  rename(type_level=imd_decile)
-  
 #Combine
 
 liverpool_wirral_table_clean <- liverpoolwirral_overall %>%
-  plyr::rbind.fill(.,liverpoolwirral_sex,liverpoolwirral_age,liverpoolwirral_imd) %>%
+  plyr::rbind.fill(.,liverpoolwirral_sex,liverpoolwirral_age) %>%
   group_by(local_authority) %>%
   tidyr::fill(period_start,period_end) %>% 
   ungroup()
 
-rm(liverpoolwirral_overall,liverpoolwirral_demos,liverpoolwirral_sex,liverpoolwirral_age,liverpoolwirral_imd)
+rm(liverpoolwirral_overall,liverpoolwirral_demos,liverpoolwirral_sex,liverpoolwirral_age)
 
 ################################################
 ################### NW London ##################
