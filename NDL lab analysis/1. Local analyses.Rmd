@@ -603,7 +603,7 @@ ggplot(age_by_source, aes(fill=source, y=pct_source/100, x=type_level)) +
   geom_bar(position="dodge", stat="identity") +
   scale_fill_brewer(palette="Set2", name = "Source") +
   scale_y_continuous(labels = scales::percent, name = "Percentage") +
-  scale_x_discrete(name = "Sex") +
+  scale_x_discrete(name = "Age") +
   theme_bw()
 ```
 
@@ -627,7 +627,7 @@ ggplot(age_by_source, aes(fill=source, y=pct_source/100, x=type_level)) +
   geom_bar(position="dodge", stat="identity") +
   scale_fill_brewer(palette="Set2", name = "Source") +
   scale_y_continuous(labels = scales::percent, name = "Percentage") +
-  scale_x_discrete(name = "Sex") +
+  scale_x_discrete(name = "Age") +
   theme_bw()
 ```
 
@@ -651,7 +651,7 @@ ggplot(age_by_source, aes(fill=source, y=pct_source/100, x=type_level)) +
   geom_bar(position="dodge", stat="identity") +
   scale_fill_brewer(palette="Set2", name = "Source") +
   scale_y_continuous(labels = scales::percent, name = "Percentage") +
-  scale_x_discrete(name = "Sex") +
+  scale_x_discrete(name = "Age") +
   theme_bw()
 ```
 
@@ -675,7 +675,7 @@ ggplot(age_by_source, aes(fill=source, y=pct_source/100, x=type_level)) +
   geom_bar(position="dodge", stat="identity") +
   scale_fill_brewer(palette="Set2", name = "Source") +
   scale_y_continuous(labels = scales::percent, name = "Percentage") +
-  scale_x_discrete(name = "Sex") +
+  scale_x_discrete(name = "Age") +
   theme_bw()
 ```
 
@@ -699,7 +699,7 @@ ggplot(age_by_source, aes(fill=source, y=pct_source/100, x=type_level)) +
   geom_bar(position="dodge", stat="identity") +
   scale_fill_brewer(palette="Set2", name = "Source") +
   scale_y_continuous(labels = scales::percent, name = "Percentage") +
-  scale_x_discrete(name = "Sex") +
+  scale_x_discrete(name = "Age") +
   theme_bw()
 ```
 
