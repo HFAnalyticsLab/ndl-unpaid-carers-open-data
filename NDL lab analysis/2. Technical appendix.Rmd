@@ -3,9 +3,12 @@ title: "Technical appendix: Networked Data Lab analysis on unpaid carers"
 author: "The Health Foundation"
 date: "`r Sys.Date()`"
 output:
-  html_document:
+  rmarkdown::html_document:
+    theme: lumen
     toc: true
 ---
+
+
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 #Load packages
