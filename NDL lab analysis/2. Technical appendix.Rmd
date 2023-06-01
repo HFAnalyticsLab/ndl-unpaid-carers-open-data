@@ -62,7 +62,7 @@ The results presented in our briefing use a federated analytics model whereby an
 
 ## Inclusion criteria
 
-- We included all unpaid carers over the **age of 18** who had either a GP or adult social care record during the study period, indicating they were an unpaid carers.
+- We included all unpaid carers over the **age of 18** who had either a GP or adult social care record during the study period, indicating they were an unpaid carer.
 
 - **GPs** (or GP practice staff) use clinical codes to keep a record of their patients who are unpaid carers. This is so they can support unpaid carers in taking care of their own health and the health of the person (or people) they are caring for. A limitation of clinical codes is that they have an unknown half-life: they show when a GP finds out someone is a carer, but not when they started being a carer and they don't reveal when someone is no longer a carer.
 
