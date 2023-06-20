@@ -142,7 +142,36 @@ leeds %>%
   kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
 ```
 
-## Chart 1: Overlap between GP and ASC data {.tabset}
+## Chart 1: Number of unpaid carers identified per year, by local authority
+
+* **How to read:** In Neath Port Talbot, in 2021, 241 carers were identified in GP data and 53 were identified in local authority data (some may have appeared in both datasets in 2021). This is in comparison to the 16,565 carers identfied in the 2021 Census.
+
+```{r, eval=TRUE, echo=FALSE, message=FALSE, warning=FALSE}
+yearly_comparisons_data <- ndl_carers_central %>%
+  filter((type=="yearly"&(source %in% c("GP","LA")))|(source %in% c("2021 Census")&type=="all carers")) %>%
+  filter(local_authority!="Swansea") %>%
+  mutate(type_level=ifelse(source=="2021 Census","2021",type_level)) %>%
+  mutate(type_level=word(type_level,1,sep="/")) %>%
+  select(source,local_authority,count,type_level)
+
+yearly_comparisons_chart <- yearly_comparisons_data %>%
+  ggplot() +
+  aes(x=type_level, y=count, fill=source) +
+  geom_bar(stat="identity", position=position_dodge()) +
+  facet_wrap(~local_authority, scales="free") +
+  scale_fill_brewer(palette="Set1", name = "Identified via") +
+  scale_y_continuous(labels = scales::comma, name = "Number of unpaid carers identified") +
+  scale_x_discrete(name = "Year") +
+  theme_bw()
+
+yearly_comparisons_chart
+
+yearly_comparisons_data %>%
+  kbl() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
+```
+
+## Chart 2: Overlap between GP and ASC data {.tabset}
 
 * Based on data pooled over the entire period
 * **How to read:** In Neath Port Talbot, over the entire period, 1,644 (1,584+60) people were ever identified as unpaid carers in GP records (81%) and 457 (457+60) were ever identified as unpaid carers in ASC data (21%). 60 people were identified in both types of records (3%).
@@ -158,6 +187,12 @@ euler_object <- euler(c("GP" = euler_chart_data %>% filter(source=="GP only") %>
                         "LA" = euler_chart_data %>% filter(source=="LA only") %>% pull(count) %>% as.numeric(),
                         "GP&LA" = euler_chart_data %>% filter(source=="GP and LA") %>% pull(count) %>% as.numeric()))
 plot(euler_object,quantities = list(type = c("percent", "counts")))
+
+npt %>%
+  filter(type=="all carers") %>%
+  filter(source %in% c("GP only","LA only","GP and LA")) %>%
+  kbl() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
 ```
 
 ### Swansea (Wales)
@@ -171,6 +206,12 @@ euler_object <- euler(c("GP" = euler_chart_data %>% filter(source=="GP only") %>
                         "LA" = euler_chart_data %>% filter(source=="LA only") %>% pull(count) %>% as.numeric(),
                         "GP&LA" = euler_chart_data %>% filter(source=="GP and LA") %>% pull(count) %>% as.numeric()))
 plot(euler_object,quantities = list(type = c("percent", "counts")))
+
+swansea %>%
+  filter(type=="all carers") %>%
+  filter(source %in% c("GP only","LA only","GP and LA")) %>%
+  kbl() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
 ```
 
 ### North West London
@@ -184,6 +225,12 @@ euler_object <- euler(c("GP" = euler_chart_data %>% filter(source=="GP") %>% pul
                         "LA" = 0,
                         "GP&LA" = 0))
 plot(euler_object,quantities = list(type = c("percent", "counts")))
+
+nwl %>%
+  filter(type=="all carers") %>%
+  filter(source %in% c("GP")) %>%
+  kbl() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
 ```
 
 ### Liverpool and Wirral
@@ -197,6 +244,12 @@ euler_object <- euler(c("GP" = euler_chart_data %>% filter(source=="GP only") %>
                         "LA" = euler_chart_data %>% filter(source=="LA only") %>% pull(count) %>% as.numeric(),
                         "GP&LA" = euler_chart_data %>% filter(source=="GP and LA") %>% pull(count) %>% as.numeric()))
 plot(euler_object,quantities = list(type = c("percent", "counts")))
+
+law %>%
+  filter(type=="all carers") %>%
+  filter(source %in% c("GP only","LA only","GP and LA")) %>%
+  kbl() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
 ```
 
 ### Leeds
@@ -210,9 +263,15 @@ euler_object <- euler(c("GP" = euler_chart_data %>% filter(source=="GP only") %>
                         "LA" = euler_chart_data %>% filter(source=="LA only") %>% pull(count) %>% as.numeric(),
                         "GP&LA" = euler_chart_data %>% filter(source=="GP and LA") %>% pull(count) %>% as.numeric()))
 plot(euler_object,quantities = list(type = c("percent", "counts")))
+
+leeds %>%
+  filter(type=="all carers") %>%
+  filter(source %in% c("GP only","LA only","GP and LA")) %>%
+  kbl() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
 ```
 
-## Chart 2: Carers in administrative records compared to census [absolute] {.tabset}
+## Chart 3: Carers in administrative records compared to census [absolute] {.tabset}
 
 * **How to read:** In Neath Port Talbot, over the entire period, 2,024 people were identified as unpaid carers in either GP or ASC records (GP ∪ ASC). According to the 2021 Census, there were 16,565 unpaid carers in Neath Port Talbot in March 2021.
 
@@ -331,7 +390,7 @@ ggplot(data=chart1_data, aes(x=source,
   scale_fill_brewer(palette="Set2", name = "Source")
 ```
 
-## Chart 3: Carers in administrative records compared to census [relative] {.tabset}
+## Chart 4: Carers in administrative records compared to census [relative] {.tabset}
 
 * **How to read:** In Neath Port Talbot, over the entire period, 2,024 people were identified as unpaid carers in either GP or ASC records (GP ∪ ASC). According to the 2021 Census, there were 16,565 unpaid carers in Neath Port Talbot in March 2021. Therefore, 11% of unpaid carers in Neath Port Talbot were successfully identified in administrative records - _assuming they are the one and same population_. 
 
@@ -460,7 +519,7 @@ chart1_data %>%
   theme_bw()
 ```
 
-## Chart 4: Sex distribution of carer cohorts {.tabset}
+## Chart 5: Sex distribution of carer cohorts {.tabset}
 
 * **How to read:** In Neath Port Talbot, over the entire period, 68% of unpaid carers identified in GP records were female compared to 70% of unpaid carers identified in ASC records. 
 
@@ -579,7 +638,7 @@ ggplot(sex_by_source, aes(fill=source, y=pct_source/100, x=type_level)) +
   theme_bw()
 ```
 
-## Chart 5: Age distribution of carer cohorts {.tabset}
+## Chart 6: Age distribution of carer cohorts {.tabset}
 
 * **How to read:** In Neath Port Talbot, over the entire period, 21% of unpaid carers identified in GP records were under the age of 40 compared to 6% of unpaid carers identified in ASC records.
 
@@ -699,511 +758,6 @@ ggplot(age_by_source, aes(fill=source, y=pct_source/100, x=type_level)) +
   geom_bar(position="dodge", stat="identity") +
   scale_fill_brewer(palette="Set2", name = "Source") +
   scale_y_continuous(labels = scales::percent, name = "Percentage") +
-  scale_x_discrete(name = "Age") +
-  theme_bw()
-```
-
-## Chart 6: Sex bias of carer cohorts {.tabset}
-
-* **How to read:** In Neath Port Talbot, over the entire period, 11% of "all" female carers were identified in GP records compared to 8% of "all" male carers. 3% of "all" female carers were identified in ASC records, compared to 2% of "all" male carers. 
-
-### Neath Port Talbot (Wales)
-
-```{r, eval=TRUE, echo=FALSE, message=FALSE, warning=FALSE}
-gp_cut <- npt %>%
-  filter(type=="sex") %>%
-  filter(source!="LA") %>% 
-  mutate(source_aux=ifelse(source=="2021 Census","2021 Census","admin")) %>%
-  select(local_authority,type_level,source_aux,count) %>% 
-  pivot_wider(names_from = source_aux,
-              names_sep = ".",
-              values_from = c(count)) %>%
-  mutate(pct_identified=as.numeric(admin)/as.numeric(`2021 Census`)*100,
-         pct_not_identified=(as.numeric(`2021 Census`)-as.numeric(admin))/as.numeric(`2021 Census`)*100,
-         source="GP") %>%
-  select(-c("admin","2021 Census")) %>% 
-  pivot_longer(!c(local_authority,source,type_level), names_to = "identified", values_to = "pct") %>%
-  mutate(identified=str_replace_all(identified,"pct_","") %>%  str_replace_all(.,"_"," "))
-
-la_cut <- npt %>%
-  filter(type=="sex") %>%
-  filter(source!="GP") %>% 
-  mutate(source_aux=ifelse(source=="2021 Census","2021 Census","admin")) %>%
-  select(local_authority,type_level,source_aux,count) %>% 
-  pivot_wider(names_from = source_aux,
-              names_sep = ".",
-              values_from = c(count)) %>%
-  mutate(pct_identified=as.numeric(admin)/as.numeric(`2021 Census`)*100,
-         pct_not_identified=(as.numeric(`2021 Census`)-as.numeric(admin))/as.numeric(`2021 Census`)*100,
-         source="LA") %>%
-  select(-c("admin","2021 Census")) %>% 
-  pivot_longer(!c(local_authority,source,type_level), names_to = "identified", values_to = "pct") %>%
-  mutate(identified=str_replace_all(identified,"pct_","") %>%  str_replace_all(.,"_"," "))
-
-both_cuts <- plyr::rbind.fill(gp_cut,la_cut)
-rm(gp_cut,la_cut)
-
-both_cuts %>%
-  kbl() %>%
-  kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
-
-both_cuts %>%
-  ggplot() +
-  aes(x=type_level, y=pct/100, fill=identified) +
-  geom_bar(stat="identity") +
-  facet_wrap(~source, ncol=2) +
-  geom_text(aes(label=paste0(sprintf("%1.1f", round(pct,0)),"%")),
-            position=position_stack(vjust=0.5)) +
-  scale_fill_brewer(palette="Set1", name = "Identified") +
-  scale_y_continuous(labels = scales::percent, name = "Percentage of Census carers\nidentified") +
-  scale_x_discrete(name = "Sex") +
-  theme_bw()
-```
-
-### Swansea (Wales)
-
-```{r, eval=TRUE, echo=FALSE, message=FALSE, warning=FALSE}
-gp_cut <- swansea %>%
-  filter(type=="sex") %>%
-  filter(source!="LA") %>% 
-  mutate(source_aux=ifelse(source=="2021 Census","2021 Census","admin")) %>%
-  select(local_authority,type_level,source_aux,count) %>% 
-  pivot_wider(names_from = source_aux,
-              names_sep = ".",
-              values_from = c(count)) %>%
-  mutate(pct_identified=as.numeric(admin)/as.numeric(`2021 Census`)*100,
-         pct_not_identified=(as.numeric(`2021 Census`)-as.numeric(admin))/as.numeric(`2021 Census`)*100,
-         source="GP") %>%
-  select(-c("admin","2021 Census")) %>% 
-  pivot_longer(!c(local_authority,source,type_level), names_to = "identified", values_to = "pct") %>%
-  mutate(identified=str_replace_all(identified,"pct_","") %>%  str_replace_all(.,"_"," "))
-
-la_cut <- swansea %>%
-  filter(type=="sex") %>%
-  filter(source!="GP") %>% 
-  mutate(source_aux=ifelse(source=="2021 Census","2021 Census","admin")) %>%
-  select(local_authority,type_level,source_aux,count) %>% 
-  pivot_wider(names_from = source_aux,
-              names_sep = ".",
-              values_from = c(count)) %>%
-  mutate(pct_identified=as.numeric(admin)/as.numeric(`2021 Census`)*100,
-         pct_not_identified=(as.numeric(`2021 Census`)-as.numeric(admin))/as.numeric(`2021 Census`)*100,
-         source="LA") %>%
-  select(-c("admin","2021 Census")) %>% 
-  pivot_longer(!c(local_authority,source,type_level), names_to = "identified", values_to = "pct") %>%
-  mutate(identified=str_replace_all(identified,"pct_","") %>%  str_replace_all(.,"_"," "))
-
-both_cuts <- plyr::rbind.fill(gp_cut,la_cut)
-rm(gp_cut,la_cut)
-
-both_cuts %>%
-  kbl() %>%
-  kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
-
-both_cuts %>%
-  ggplot() +
-  aes(x=type_level, y=pct/100, fill=identified) +
-  geom_bar(stat="identity") +
-  facet_wrap(~source, ncol=2) +
-  geom_text(aes(label=paste0(sprintf("%1.1f", round(pct,0)),"%")),
-            position=position_stack(vjust=0.5)) +
-  scale_fill_brewer(palette="Set1", name = "Identified") +
-  scale_y_continuous(labels = scales::percent, name = "Percentage of Census carers\nidentified") +
-  scale_x_discrete(name = "Sex") +
-  theme_bw()
-```
-
-### North West London
-
-```{r, eval=TRUE, echo=FALSE, message=FALSE, warning=FALSE}
-gp_cut <- nwl %>%
-  filter(type=="sex") %>%
-  filter(source!="LA") %>% 
-  mutate(source_aux=ifelse(source=="2021 Census","2021 Census","admin")) %>%
-  select(local_authority,type_level,source_aux,count) %>% 
-  pivot_wider(names_from = source_aux,
-              names_sep = ".",
-              values_from = c(count)) %>%
-  mutate(pct_identified=as.numeric(admin)/as.numeric(`2021 Census`)*100,
-         pct_not_identified=(as.numeric(`2021 Census`)-as.numeric(admin))/as.numeric(`2021 Census`)*100,
-         source="GP") %>%
-  select(-c("admin","2021 Census")) %>% 
-  pivot_longer(!c(local_authority,source,type_level), names_to = "identified", values_to = "pct") %>%
-  mutate(identified=str_replace_all(identified,"pct_","") %>%  str_replace_all(.,"_"," "))
-
-both_cuts <- plyr::rbind.fill(gp_cut)
-rm(gp_cut)
-
-both_cuts %>%
-  kbl() %>%
-  kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
-
-both_cuts %>%
-  ggplot() +
-  aes(x=type_level, y=pct/100, fill=identified) +
-  geom_bar(stat="identity") +
-  facet_wrap(~source, ncol=2) +
-  geom_text(aes(label=paste0(sprintf("%1.1f", round(pct,0)),"%")),
-            position=position_stack(vjust=0.5)) +
-  scale_fill_brewer(palette="Set1", name = "Identified") +
-  scale_y_continuous(labels = scales::percent, name = "Percentage of Census carers\nidentified") +
-  scale_x_discrete(name = "Sex") +
-  theme_bw()
-```
-
-### Liverpool and Wirral
-
-```{r, eval=TRUE, echo=FALSE, message=FALSE, warning=FALSE}
-gp_cut <- law %>%
-  filter(type=="sex"&source %in% c("GP","2021 Census")) %>%
-  mutate(source_aux=ifelse(source=="2021 Census","2021 Census","admin")) %>%
-  select(local_authority,type_level,source_aux,count) %>% 
-  pivot_wider(names_from = source_aux,
-              names_sep = ".",
-              values_from = c(count)) %>%
-  mutate(pct_identified=as.numeric(admin)/as.numeric(`2021 Census`)*100,
-         pct_not_identified=(as.numeric(`2021 Census`)-as.numeric(admin))/as.numeric(`2021 Census`)*100,
-         source="GP") %>%
-  select(-c("admin","2021 Census")) %>% 
-  pivot_longer(!c(local_authority,source,type_level), names_to = "identified", values_to = "pct") %>%
-  mutate(identified=str_replace_all(identified,"pct_","") %>%  str_replace_all(.,"_"," "))
-
-la_cut <- law %>%
-  filter(type=="sex"&source %in% c("LA","2021 Census")) %>%
-    mutate(source_aux=ifelse(source=="2021 Census","2021 Census","admin")) %>%
-  select(local_authority,type_level,source_aux,count) %>% 
-  pivot_wider(names_from = source_aux,
-              names_sep = ".",
-              values_from = c(count)) %>%
-  mutate(pct_identified=as.numeric(admin)/as.numeric(`2021 Census`)*100,
-         pct_not_identified=(as.numeric(`2021 Census`)-as.numeric(admin))/as.numeric(`2021 Census`)*100,
-         source="LA") %>%
-  select(-c("admin","2021 Census")) %>% 
-  pivot_longer(!c(local_authority,source,type_level), names_to = "identified", values_to = "pct") %>%
-  mutate(identified=str_replace_all(identified,"pct_","") %>%  str_replace_all(.,"_"," "))
-
-both_cuts <- plyr::rbind.fill(gp_cut,la_cut)
-rm(gp_cut,la_cut)
-
-both_cuts %>%
-  kbl() %>%
-  kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
-
-both_cuts %>%
-  ggplot() +
-  aes(x=type_level, y=pct/100, fill=identified) +
-  geom_bar(stat="identity") +
-  facet_wrap(~source, ncol=2) +
-  geom_text(aes(label=paste0(sprintf("%1.1f", round(pct,0)),"%")),
-            position=position_stack(vjust=0.5)) +
-  scale_fill_brewer(palette="Set1", name = "Identified") +
-  scale_y_continuous(labels = scales::percent, name = "Percentage of Census carers\nidentified") +
-  scale_x_discrete(name = "Sex") +
-  theme_bw()
-```
-
-### Leeds
-
-```{r, eval=TRUE, echo=FALSE, message=FALSE, warning=FALSE}
-gp_cut <- leeds %>%
-  filter(type=="sex"&source %in% c("GP","2021 Census")&(type_level %in% c("male","female"))) %>%
-  mutate(source_aux=ifelse(source=="2021 Census","2021 Census","admin")) %>%
-  select(local_authority,type_level,source_aux,count) %>% 
-  pivot_wider(names_from = source_aux,
-              names_sep = ".",
-              values_from = c(count)) %>%
-  mutate(pct_identified=as.numeric(admin)/as.numeric(`2021 Census`)*100,
-         pct_not_identified=(as.numeric(`2021 Census`)-as.numeric(admin))/as.numeric(`2021 Census`)*100,
-         source="GP") %>%
-  select(-c("admin","2021 Census")) %>% 
-  pivot_longer(!c(local_authority,source,type_level), names_to = "identified", values_to = "pct") %>%
-  mutate(identified=str_replace_all(identified,"pct_","") %>%  str_replace_all(.,"_"," "))
-
-la_cut <- leeds %>%
-  filter(type=="sex"&source %in% c("LA","2021 Census")&(type_level %in% c("male","female"))) %>%
-    mutate(source_aux=ifelse(source=="2021 Census","2021 Census","admin")) %>%
-  select(local_authority,type_level,source_aux,count) %>% 
-  pivot_wider(names_from = source_aux,
-              names_sep = ".",
-              values_from = c(count)) %>%
-  mutate(pct_identified=as.numeric(admin)/as.numeric(`2021 Census`)*100,
-         pct_not_identified=(as.numeric(`2021 Census`)-as.numeric(admin))/as.numeric(`2021 Census`)*100,
-         source="LA") %>%
-  select(-c("admin","2021 Census")) %>% 
-  pivot_longer(!c(local_authority,source,type_level), names_to = "identified", values_to = "pct") %>%
-  mutate(identified=str_replace_all(identified,"pct_","") %>%  str_replace_all(.,"_"," "))
-
-both_cuts <- plyr::rbind.fill(gp_cut,la_cut)
-rm(gp_cut,la_cut)
-
-both_cuts %>%
-  kbl() %>%
-  kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
-
-both_cuts %>%
-  ggplot() +
-  aes(x=type_level, y=pct/100, fill=identified) +
-  geom_bar(stat="identity") +
-  facet_wrap(~source, ncol=2) +
-  geom_text(aes(label=paste0(sprintf("%1.1f", round(pct,0)),"%")),
-            position=position_stack(vjust=0.5)) +
-  scale_fill_brewer(palette="Set1", name = "Identified") +
-  scale_y_continuous(labels = scales::percent, name = "Percentage of Census carers\nidentified") +
-  scale_x_discrete(name = "Sex") +
-  theme_bw()
-```
-
-## Chart 7: Age bias of carer cohorts {.tabset}
-
-* **How to read:** In Neath Port Talbot, over the entire period, 12% of "all" carers age 80 and over were identified in GP records compared to 10% of "all" carers under the age of 40. 8% of "all" carers age 80 and over were identified in ASC records, compared to 1% of "all" carers under the age of 40. 
-
-### Neath Port Talbot (Wales)
-
-```{r, eval=TRUE, echo=FALSE, message=FALSE, warning=FALSE}
-gp_cut <- npt %>%
-  filter(type=="age") %>%
-  filter(source!="LA") %>% 
-  mutate(source_aux=ifelse(source=="2021 Census","2021 Census","admin")) %>%
-  select(local_authority,type_level,source_aux,count) %>% 
-  pivot_wider(names_from = source_aux,
-              names_sep = ".",
-              values_from = c(count)) %>%
-  mutate(pct_identified=as.numeric(admin)/as.numeric(`2021 Census`)*100,
-         pct_not_identified=(as.numeric(`2021 Census`)-as.numeric(admin))/as.numeric(`2021 Census`)*100,
-         source="GP") %>%
-  select(-c("admin","2021 Census")) %>% 
-  pivot_longer(!c(local_authority,source,type_level), names_to = "identified", values_to = "pct") %>%
-  mutate(identified=str_replace_all(identified,"pct_","") %>%  str_replace_all(.,"_"," "))
-
-la_cut <- npt %>%
-  filter(type=="age") %>%
-  filter(source!="GP") %>% 
-  mutate(source_aux=ifelse(source=="2021 Census","2021 Census","admin")) %>%
-  select(local_authority,type_level,source_aux,count) %>% 
-  pivot_wider(names_from = source_aux,
-              names_sep = ".",
-              values_from = c(count)) %>%
-  mutate(pct_identified=as.numeric(admin)/as.numeric(`2021 Census`)*100,
-         pct_not_identified=(as.numeric(`2021 Census`)-as.numeric(admin))/as.numeric(`2021 Census`)*100,
-         source="LA") %>%
-  select(-c("admin","2021 Census")) %>% 
-  pivot_longer(!c(local_authority,source,type_level), names_to = "identified", values_to = "pct") %>%
-  mutate(identified=str_replace_all(identified,"pct_","") %>%  str_replace_all(.,"_"," "))
-
-both_cuts <- plyr::rbind.fill(gp_cut,la_cut) %>%
-  mutate(type_level=fct_relevel(type_level,c("under 40","40-49","50-59","60-69","70-79","80+")))
-rm(gp_cut,la_cut)
-
-both_cuts %>%
-  kbl() %>%
-  kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
-
-both_cuts %>%
-  ggplot() +
-  aes(x=type_level, y=pct/100, fill=identified) +
-  geom_bar(stat="identity") +
-  facet_wrap(~source, ncol=2) +
-  geom_text(aes(label=paste0(sprintf("%1.1f", round(pct,0)),"%")),
-            position=position_stack(vjust=0.5)) +
-  scale_fill_brewer(palette="Set1", name = "Identified") +
-  scale_y_continuous(labels = scales::percent, name = "Percentage of Census carers\nidentified") +
-  scale_x_discrete(name = "Age") +
-  theme_bw()
-```
-
-### Swansea (Wales)
-
-```{r, eval=TRUE, echo=FALSE, message=FALSE, warning=FALSE}
-gp_cut <- swansea %>%
-  filter(type=="age") %>%
-  filter(source!="LA") %>% 
-  mutate(source_aux=ifelse(source=="2021 Census","2021 Census","admin")) %>%
-  select(local_authority,type_level,source_aux,count) %>% 
-  pivot_wider(names_from = source_aux,
-              names_sep = ".",
-              values_from = c(count)) %>%
-  mutate(pct_identified=as.numeric(admin)/as.numeric(`2021 Census`)*100,
-         pct_not_identified=(as.numeric(`2021 Census`)-as.numeric(admin))/as.numeric(`2021 Census`)*100,
-         source="GP") %>%
-  select(-c("admin","2021 Census")) %>% 
-  pivot_longer(!c(local_authority,source,type_level), names_to = "identified", values_to = "pct") %>%
-  mutate(identified=str_replace_all(identified,"pct_","") %>%  str_replace_all(.,"_"," "))
-
-la_cut <- swansea %>%
-  filter(type=="age") %>%
-  filter(source!="GP") %>% 
-  mutate(source_aux=ifelse(source=="2021 Census","2021 Census","admin")) %>%
-  select(local_authority,type_level,source_aux,count) %>% 
-  pivot_wider(names_from = source_aux,
-              names_sep = ".",
-              values_from = c(count)) %>%
-  mutate(pct_identified=as.numeric(admin)/as.numeric(`2021 Census`)*100,
-         pct_not_identified=(as.numeric(`2021 Census`)-as.numeric(admin))/as.numeric(`2021 Census`)*100,
-         source="LA") %>%
-  select(-c("admin","2021 Census")) %>% 
-  pivot_longer(!c(local_authority,source,type_level), names_to = "identified", values_to = "pct") %>%
-  mutate(identified=str_replace_all(identified,"pct_","") %>%  str_replace_all(.,"_"," "))
-
-both_cuts <- plyr::rbind.fill(gp_cut,la_cut) %>%
-  mutate(type_level=fct_relevel(type_level,c("under 40","40-49","50-59","60-69","70-79","80+")))
-rm(gp_cut,la_cut)
-
-both_cuts %>%
-  kbl() %>%
-  kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
-
-both_cuts %>%
-  ggplot() +
-  aes(x=type_level, y=pct/100, fill=identified) +
-  geom_bar(stat="identity") +
-  facet_wrap(~source, ncol=2) +
-  geom_text(aes(label=paste0(sprintf("%1.1f", round(pct,0)),"%")),
-            position=position_stack(vjust=0.5)) +
-  scale_fill_brewer(palette="Set1", name = "Identified") +
-  scale_y_continuous(labels = scales::percent, name = "Percentage of Census carers\nidentified") +
-  scale_x_discrete(name = "Age") +
-  theme_bw()
-```
-
-### North West London
-
-```{r, eval=TRUE, echo=FALSE, message=FALSE, warning=FALSE}
-gp_cut <- nwl %>%
-  filter(type=="age") %>%
-  filter(source!="LA") %>% 
-  mutate(source_aux=ifelse(source=="2021 Census","2021 Census","admin")) %>%
-  select(local_authority,type_level,source_aux,count) %>% 
-  pivot_wider(names_from = source_aux,
-              names_sep = ".",
-              values_from = c(count)) %>%
-  mutate(pct_identified=as.numeric(admin)/as.numeric(`2021 Census`)*100,
-         pct_not_identified=(as.numeric(`2021 Census`)-as.numeric(admin))/as.numeric(`2021 Census`)*100,
-         source="GP") %>%
-  select(-c("admin","2021 Census")) %>% 
-  pivot_longer(!c(local_authority,source,type_level), names_to = "identified", values_to = "pct") %>%
-  mutate(identified=str_replace_all(identified,"pct_","") %>%  str_replace_all(.,"_"," "))
-
-both_cuts <- plyr::rbind.fill(gp_cut) %>%
-  mutate(type_level=fct_relevel(type_level,c("18-29","30-39","40-49","50-59","60-69","70-79","80+")))
-rm(gp_cut,la_cut)
-
-both_cuts %>%
-  kbl() %>%
-  kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
-
-both_cuts %>%
-  ggplot() +
-  aes(x=type_level, y=pct/100, fill=identified) +
-  geom_bar(stat="identity") +
-  facet_wrap(~source, ncol=2) +
-  geom_text(aes(label=paste0(sprintf("%1.1f", round(pct,0)),"%")),
-            position=position_stack(vjust=0.5)) +
-  scale_fill_brewer(palette="Set1", name = "Identified") +
-  scale_y_continuous(labels = scales::percent, name = "Percentage of Census carers\nidentified") +
-  scale_x_discrete(name = "Age") +
-  theme_bw()
-```
-
-### Liverpool and Wirral
-
-```{r, eval=TRUE, echo=FALSE, message=FALSE, warning=FALSE}
-gp_cut <- law %>%
-  filter(type=="age"&(source %in% c("GP","2021 Census"))) %>%
-  mutate(source_aux=ifelse(source=="2021 Census","2021 Census","admin")) %>%
-  select(local_authority,type_level,source_aux,count) %>% 
-  pivot_wider(names_from = source_aux,
-              names_sep = ".",
-              values_from = c(count)) %>%
-  mutate(pct_identified=as.numeric(admin)/as.numeric(`2021 Census`)*100,
-         pct_not_identified=(as.numeric(`2021 Census`)-as.numeric(admin))/as.numeric(`2021 Census`)*100,
-         source="GP") %>%
-  select(-c("admin","2021 Census")) %>% 
-  pivot_longer(!c(local_authority,source,type_level), names_to = "identified", values_to = "pct") %>%
-  mutate(identified=str_replace_all(identified,"pct_","") %>%  str_replace_all(.,"_"," "))
-
-la_cut <- law %>%
-  filter(type=="age"&(source %in% c("LA","2021 Census"))) %>%
-  mutate(source_aux=ifelse(source=="2021 Census","2021 Census","admin")) %>%
-  select(local_authority,type_level,source_aux,count) %>% 
-  pivot_wider(names_from = source_aux,
-              names_sep = ".",
-              values_from = c(count)) %>%
-  mutate(pct_identified=as.numeric(admin)/as.numeric(`2021 Census`)*100,
-         pct_not_identified=(as.numeric(`2021 Census`)-as.numeric(admin))/as.numeric(`2021 Census`)*100,
-         source="LA") %>%
-  select(-c("admin","2021 Census")) %>% 
-  pivot_longer(!c(local_authority,source,type_level), names_to = "identified", values_to = "pct") %>%
-  mutate(identified=str_replace_all(identified,"pct_","") %>%  str_replace_all(.,"_"," "))
-
-both_cuts <- plyr::rbind.fill(gp_cut,la_cut) %>%
-  mutate(type_level=fct_relevel(type_level,c("18-29","30-39","40-49","50-59","60-69","70-79","80+")))
-rm(gp_cut,la_cut)
-
-both_cuts %>%
-  kbl() %>%
-  kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
-
-both_cuts %>%
-  ggplot() +
-  aes(x=type_level, y=pct/100, fill=identified) +
-  geom_bar(stat="identity") +
-  facet_wrap(~source, ncol=2) +
-  geom_text(aes(label=paste0(sprintf("%1.1f", round(pct,0)),"%")),
-            position=position_stack(vjust=0.5)) +
-  scale_fill_brewer(palette="Set1", name = "Identified") +
-  scale_y_continuous(labels = scales::percent, name = "Percentage of Census carers\nidentified") +
-  scale_x_discrete(name = "Age") +
-  theme_bw()
-```
-
-### Leeds
-
-```{r, eval=TRUE, echo=FALSE, message=FALSE, warning=FALSE}
-gp_cut <- leeds %>%
-  filter(type=="age"&(source %in% c("GP","2021 Census"))&type_level!="unknown") %>%
-  mutate(source_aux=ifelse(source=="2021 Census","2021 Census","admin")) %>%
-  select(local_authority,type_level,source_aux,count) %>% 
-  pivot_wider(names_from = source_aux,
-              names_sep = ".",
-              values_from = c(count)) %>%
-  mutate(pct_identified=as.numeric(admin)/as.numeric(`2021 Census`)*100,
-         pct_not_identified=(as.numeric(`2021 Census`)-as.numeric(admin))/as.numeric(`2021 Census`)*100,
-         source="GP") %>%
-  select(-c("admin","2021 Census")) %>% 
-  pivot_longer(!c(local_authority,source,type_level), names_to = "identified", values_to = "pct") %>%
-  mutate(identified=str_replace_all(identified,"pct_","") %>%  str_replace_all(.,"_"," "))
-
-la_cut <- leeds %>%
-  filter(type=="age"&(source %in% c("LA","2021 Census"))&type_level!="unknown") %>%
-  mutate(source_aux=ifelse(source=="2021 Census","2021 Census","admin")) %>%
-  select(local_authority,type_level,source_aux,count) %>% 
-  pivot_wider(names_from = source_aux,
-              names_sep = ".",
-              values_from = c(count)) %>%
-  mutate(pct_identified=as.numeric(admin)/as.numeric(`2021 Census`)*100,
-         pct_not_identified=(as.numeric(`2021 Census`)-as.numeric(admin))/as.numeric(`2021 Census`)*100,
-         source="LA") %>%
-  select(-c("admin","2021 Census")) %>% 
-  pivot_longer(!c(local_authority,source,type_level), names_to = "identified", values_to = "pct") %>%
-  mutate(identified=str_replace_all(identified,"pct_","") %>%  str_replace_all(.,"_"," "))
-
-both_cuts <- plyr::rbind.fill(gp_cut,la_cut) %>%
-  mutate(type_level=fct_relevel(type_level,c("18-29","30-39","40-49","50-59","60-69","70-79","80+")))
-rm(gp_cut,la_cut)
-
-both_cuts %>%
-  kbl() %>%
-  kable_styling(bootstrap_options = "striped", full_width = F, position = "left")
-
-both_cuts %>%
-  ggplot() +
-  aes(x=type_level, y=pct/100, fill=identified) +
-  geom_bar(stat="identity") +
-  facet_wrap(~source, ncol=2) +
-  geom_text(aes(label=paste0(sprintf("%1.1f", round(pct,0)),"%")),
-            position=position_stack(vjust=0.5)) +
-  scale_fill_brewer(palette="Set1", name = "Identified") +
-  scale_y_continuous(labels = scales::percent, name = "Percentage of Census carers\nidentified") +
   scale_x_discrete(name = "Age") +
   theme_bw()
 ```

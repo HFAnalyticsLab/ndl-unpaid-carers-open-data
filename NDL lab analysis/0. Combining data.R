@@ -1,6 +1,9 @@
-##########################################################
-################### DEVELOPMENT IDEAS ####################
-##########################################################
+################################################
+################### READ-ME ####################
+################################################
+
+# The purpose of this file is to append all analyses by NDL labs into one convenient data frame
+# alongside the relevant Census tables
 
 ##############################################
 ################### SETUP ####################
@@ -34,11 +37,12 @@ localgit <- dirname(rstudioapi::getSourceEditorContext()$path)
 
 #England
 
+  #Number of carers by local authority, age and sex 
 carers_census_2021_age_sex_eng <- s3read_using(read_excel,
                                                object = paste0(ASC_subfolder,"/2021 Census/sc012021reftablesengland1.xlsx"),
                                                bucket = IHT_bucket,
                                                sheet="Table 5",skip=3)
-
+  #Number of carers by local authority, age and sex and hours
 carers_census_2021_age_sex_hours_eng <- s3read_using(read_excel,
                                                      object = paste0(ASC_subfolder,"/2021 Census/sc012021reftablesengland1.xlsx"),
                                                      bucket = IHT_bucket,
@@ -46,21 +50,24 @@ carers_census_2021_age_sex_hours_eng <- s3read_using(read_excel,
 
 #Wales
 
+  #Number of carers by local authority, age and sex 
 carers_census_2021_age_sex_wales <- s3read_using(read_excel,
                                                  object = paste0(ASC_subfolder,"/2021 Census/sc012021reftableswales1.xlsx"),
                                                  bucket = IHT_bucket,
                                                  sheet="Table 3",skip=3)
-
+  #Number of carers by local authority, age and sex and hours
 carers_census_2021_age_sex_hours_wales <- s3read_using(read_excel,
                                                        object = paste0(ASC_subfolder,"/2021 Census/sc012021reftableswales1.xlsx"),
                                                        bucket = IHT_bucket,
                                                        sheet="Table 11",skip=3)
 
-#Combined
+#Combined England and Wales
 
+  #Number of carers by local authority, age and sex 
 carers_census_2021_age_sex_engwales <- plyr::rbind.fill(carers_census_2021_age_sex_eng,
                                                         carers_census_2021_age_sex_wales)
 
+  #Number of carers by local authority, age and sex and hours
 carers_census_2021_age_sex_hours_engwales <- plyr::rbind.fill(carers_census_2021_age_sex_hours_eng,
                                                               carers_census_2021_age_sex_hours_wales)
 
@@ -70,7 +77,8 @@ rm(carers_census_2021_age_sex_eng,carers_census_2021_age_sex_wales,carers_census
 ################### Clean Census data ##################
 ########################################################
 
-#Import Census data
+#Import Census data, and keep relevant local authorities
+#Combine groups of local authorities together, such as 'Liverpool and Wirral' or 'North West London'
 census_filtered <- carers_census_2021_age_sex_engwales %>%
   janitor::clean_names() %>%
   select(local_authority,unpaid_carer_status,age,sex,count) %>% 
@@ -110,6 +118,7 @@ census_filtered_sex <- census_filtered %>%
   rename(type_level=sex)
 
 #By age
+#This is done separately for each NDL area, because some use more/fewer age categories
 census_filtered_age <- census_filtered %>%
   filter(sex=="Persons") %>%
   mutate(type="age") %>%
@@ -183,7 +192,7 @@ census_filtered_age_leeds <- census_filtered_age %>%
   summarise(count=sum(count,na.rm = TRUE)) %>%
   ungroup()
 
-#Append
+#Append into one clean file
 census_filtered_clean <- plyr::rbind.fill(census_filtered_all,census_filtered_sex,
                                           census_filtered_age_wales,
                                           census_filtered_age_nwlondon,
@@ -197,13 +206,11 @@ rm(carers_census_2021_age_sex_engwales,carers_census_2021_age_sex_hours_engwales
 ################### Leeds ##################
 ############################################
 
-#1/1/2016 and 31/12/2021
-
-#All carers
+#Overall: all carers
 
 leeds_table_one <- s3read_using(read_excel,
-                                     object = "NDL-carers-partner-data/Leeds/a1_comb.xlsx",
-                                     bucket = IHT_bucket, sheet="T1_1_overall") %>%
+                                object = "NDL-carers-partner-data/Leeds/a1_comb.xlsx",
+                                bucket = IHT_bucket, sheet="T1_1_overall") %>%
   mutate(period_start="1/1/2016",
          period_end="31/12/2021",
          local_authority="Leeds",
@@ -221,9 +228,31 @@ leeds_table_one <- s3read_using(read_excel,
          `GP or LA`=`LA`+`GP`-`GP and LA`) %>%
   pivot_longer(!(period_start:type_level), names_to = "source", values_to = "count")
 
+#Yearly
+
+leeds_table_two <- s3read_using(read_excel,
+                                object = "NDL-carers-partner-data/Leeds/a2_comb.xlsx",
+                                bucket = IHT_bucket, sheet="T2_1_overall") %>%
+  mutate(period_start="1/1/2016",
+         period_end="31/12/2021",
+         local_authority="Leeds",
+         type="yearly") %>%
+  rename(type_level=year) %>% 
+  select(-"overall") %>% 
+  rename(source=cohort,
+         count=number.carers) %>%
+  mutate(source=ifelse(source=="Overlap","GP and LA",source)) %>%
+  pivot_wider(names_from = source,
+              names_sep = ".",
+              values_from = c(count)) %>%
+  mutate(`GP only`=`GP`-`GP and LA`,
+         `LA only`=`LA`-`GP and LA`,
+         `GP or LA`=`LA`+`GP`-`GP and LA`) %>%
+  pivot_longer(!(type_level:type), names_to = "source", values_to = "count")
+
 #By demographics
 
-#sex
+#Sex
 
 leeds_table_sex <- s3read_using(read_excel,
                                 object = "NDL-carers-partner-data/Leeds/a1_comb.xlsx",
@@ -243,7 +272,7 @@ leeds_table_sex <- s3read_using(read_excel,
          `LA only`=`LA`-`GP and LA`) %>%
   pivot_longer(!(type_level:type), names_to = "source", values_to = "count")
 
-#age
+#Age
 
 leeds_table_age <- s3read_using(read_excel,
                                 object = "NDL-carers-partner-data/Leeds/a1_comb.xlsx",
@@ -264,7 +293,7 @@ leeds_table_age <- s3read_using(read_excel,
   mutate(across(everything(), as.character)) %>% 
   pivot_longer(!(type_level:type), names_to = "source", values_to = "count")
 
-#imd
+#IMD
 
 leeds_table_imd <- s3read_using(read_excel,
                                 object = "NDL-carers-partner-data/Leeds/a1_comb.xlsx",
@@ -288,20 +317,18 @@ leeds_table_imd <- s3read_using(read_excel,
 #Combine
 
 leeds_table_clean <- leeds_table_one %>%
-  plyr::rbind.fill(.,leeds_table_sex,leeds_table_age,leeds_table_imd) %>%
+  plyr::rbind.fill(.,leeds_table_two,leeds_table_sex,leeds_table_age,leeds_table_imd) %>%
   group_by(local_authority) %>%
   tidyr::fill(period_start,period_end) %>% 
   ungroup()
 
-rm(leeds_table_one,leeds_table_sex,leeds_table_age,leeds_table_imd)
+rm(leeds_table_one,leeds_table_two,leeds_table_sex,leeds_table_age,leeds_table_imd)
 
 ###########################################################
 ################### Liverpool and Wirral ##################
 ###########################################################
 
-#Jan 2016 – Dec 2021
-
-#All carers
+#Overall: all carers
 
 liverpoolwirral_table_one <- s3read_using(fread,
                                           object = "NDL-carers-partner-data/Liverpool and Wirral/Central/Analysis 1/table1.csv",
@@ -326,6 +353,26 @@ liverpoolwirral_overall <- liverpoolwirral_table_one %>%
   filter(!is.na(count)&!is.na(source)&source!="NA")
 
 rm(liverpoolwirral_table_one)
+
+#Yearly
+
+liverpoolwirral_table_two <- s3read_using(fread,
+                                          object = "NDL-carers-partner-data/Liverpool and Wirral/Central/Analysis 2/HF_look_back_totals.csv",
+                                          bucket = IHT_bucket) %>%
+  mutate(asc_only=`asc`-`gp_and_asc`,
+         gp_only=`gp`-`gp_and_asc`) %>% 
+  pivot_longer(!year, names_to = "source", values_to = "count") %>%
+  rename(type_level=year) %>% 
+  mutate(type="yearly",
+         local_authority="Liverpool and Wirral",
+         period_start="01/01/2016",
+         period_end="31/12/2021",
+         source=case_when(source=="asc" ~ "LA",
+                          source=="gp" ~ "GP",
+                          source=="asc_only" ~ "LA only",
+                          source=="gp_only" ~ "GP only",
+                          source=="gp_and_asc" ~ "GP and LA",
+                          TRUE ~ "NA"))
 
 #By demographics
 
@@ -357,26 +404,26 @@ liverpoolwirral_age <- liverpoolwirral_demos %>%
 #Combine
 
 liverpool_wirral_table_clean <- liverpoolwirral_overall %>%
-  plyr::rbind.fill(.,liverpoolwirral_sex,liverpoolwirral_age) %>%
+  plyr::rbind.fill(.,liverpoolwirral_table_two,liverpoolwirral_sex,liverpoolwirral_age) %>%
   group_by(local_authority) %>%
   tidyr::fill(period_start,period_end) %>% 
   ungroup()
 
-rm(liverpoolwirral_overall,liverpoolwirral_demos,liverpoolwirral_sex,liverpoolwirral_age)
+rm(liverpoolwirral_overall,liverpoolwirral_table_two,liverpoolwirral_demos,liverpoolwirral_sex,liverpoolwirral_age)
 
 ################################################
 ################### NW London ##################
 ################################################
 
-# NW London	01.01.2016 – 31.12.2021
+#Overall: all carers
 
 nwlondon_table_clean <- s3read_using(read_excel,
-                                     object = "NDL-carers-partner-data/NW London/NWL Central Analysis Tables.xlsx",
+                                     object = "NDL-carers-partner-data/NW London/Central Analysis Tables.xlsx",
                                      bucket = IHT_bucket, sheet="Analysis 1 Tables") %>%
   select(2:4) %>%
   rename(type=`...2`,
-         type_level=n,
-         count=`54679`) %>%
+         type_level=`n=54679`,
+         count=`...4`) %>%
   mutate(local_authority="North West London",
          source="GP",
          period_start="01/01/2016",
@@ -396,18 +443,24 @@ nwlondon_table_overall <- nwlondon_table_clean %>%
   mutate(type="all carers",
          type_level="all carers")
 
+nwlondon_table_yearly <- s3read_using(read_excel,
+                                     object = "NDL-carers-partner-data/NW London/Central Analysis Tables.xlsx",
+                                     bucket = IHT_bucket, sheet="Analysis 2 Tables Clean") %>%
+  mutate(local_authority="North West London",
+         source="GP",
+         period_start="01/01/2016",
+         period_end="31/12/2021")
+
 nwlondon_table_clean <- plyr::rbind.fill(nwlondon_table_overall,
-                                   nwlondon_table_clean)
-rm(nwlondon_table_overall)
+                                   nwlondon_table_clean,
+                                   nwlondon_table_yearly)
+rm(nwlondon_table_overall,nwlondon_table_yearly)
 
 ############################################
 ################### Wales ##################
 ############################################
 
-# Swansea	04/2021 - 06/2022	436
-# Neath Port Talbot (NPT)	07/2017 - 05/2022	537
-
-#All carers
+#Overall: all carers
 
 wales_table_raw <- s3read_using(read_excel,
                                 object = "NDL-carers-partner-data/Wales/Table2.xlsx",
@@ -440,6 +493,19 @@ rm(wales_table_raw)
 
 #NPT
 
+npt_yearly <- s3read_using(fread,
+                           object = "NDL-carers-partner-data/Wales/Figure 3_1429_timeline_plots_yearly_npt_data_peje.csv",
+                           bucket = IHT_bucket) %>%
+  rename(type_level=financial_yr,
+         source=cohort) %>%
+  select(-c("variable","level","LA")) %>% 
+  mutate(period_start=NA,
+         period_end=NA,
+         local_authority="Neath Port Talbot (NPT)",
+         type="yearly",
+         source=case_when(source=="npt_la" ~ "LA",
+                          source=="npt_gp" ~ "GP"))
+
 npt_demographics_sex <- s3read_using(read_excel,
                                      object = "NDL-carers-partner-data/Wales/Figure 1+6+9+13+16+17_1429_npt_demographics_countsperc_peje.xlsx",
                                      bucket = IHT_bucket,
@@ -471,6 +537,21 @@ npt_demographics_wimd <- s3read_using(read_excel,
          source=identifiedby)
 
 #Swansea
+
+swansea_yearly <- s3read_using(fread,
+                           object = "NDL-carers-partner-data/Wales/Figure 4_1429_df_swansea_lagp_qtrly_peje.CSV",
+                           bucket = IHT_bucket) %>%
+  rename(source=cohort) %>%
+  mutate(type_level=paste(index_yr,index_quarter,sep="-"),
+         period_start=NA,
+         period_end=NA,
+         local_authority="Swansea",
+         type="yearly",
+         source=case_when(source=="swansea_la" ~ "LA",
+                          source=="swansea_gp" ~ "GP")) %>%
+  select(-c("index_yr","index_quarter")) %>%
+  filter(type_level %in% c("2021-Q2","2021-Q3","2021-Q4","2022-Q1"))
+  
 
 swansea_demographics_sex <- s3read_using(read_excel,
                                          object = "NDL-carers-partner-data/Wales/Figure 2+20+23+27+30+31_1429_swansea_demographics_countsperc_peje.xlsx",
@@ -505,16 +586,16 @@ swansea_demographics_wimd <- s3read_using(read_excel,
 #Combine
 
 wales_table_clean <- wales_table %>%
-  plyr::rbind.fill(.,npt_demographics_sex,npt_demographics_age,npt_demographics_wimd) %>%
-  plyr::rbind.fill(.,swansea_demographics_sex,swansea_demographics_age,swansea_demographics_wimd) %>%
+  plyr::rbind.fill(.,npt_yearly,npt_demographics_sex,npt_demographics_age,npt_demographics_wimd) %>%
+  plyr::rbind.fill(.,swansea_yearly,swansea_demographics_sex,swansea_demographics_age,swansea_demographics_wimd) %>%
   group_by(local_authority) %>%
   tidyr::fill(period_start,period_end) %>% 
   ungroup() %>%
   mutate(local_authority=ifelse(local_authority=="Neath Port Talbot (NPT)","Neath Port Talbot",local_authority))
 
 rm(wales_table)
-rm(npt_demographics_sex,npt_demographics_age,npt_demographics_wimd)
-rm(swansea_demographics_sex,swansea_demographics_age,swansea_demographics_wimd)
+rm(npt_yearly,npt_demographics_sex,npt_demographics_age,npt_demographics_wimd)
+rm(swansea_yearly,swansea_demographics_sex,swansea_demographics_age,swansea_demographics_wimd)
 
 #############################################################
 ################### Combine local analyses ##################
