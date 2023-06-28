@@ -41,6 +41,10 @@ This repository includes two separate folders:
 
 * **`NDL lab analysis/2. Technical appendix.Rmd`** Technical appendix for central analysis carried out by NDL partners. This markdown results in an HTML file being created inside this folder.
 
+**Data sharing agreement temlates**
+
+* **`Data sharing agreements/`** This folder includes data sharing agreement templates used by local authorities to enable sharing their data on carer assessments.
+
 ### Requirements
 
 These scripts were written in R version 4.0.2.
